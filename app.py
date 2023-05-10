@@ -1,9 +1,8 @@
 import configparser
-import sys
+import os
 
 import requests
 from flask import Flask, render_template, request
-from ast import literal_eval
 
 app = Flask(__name__)
 
@@ -41,6 +40,12 @@ def results():
     return render_template('results.html', sightings=sightings)
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0')
+    # app.run(debug=True, host='0.0.0.0', ssl_context=('ssl/cert.pem', 'ssl/key.pem'))
+    # print(os.listdir('/app/ssl'))
+    # print(os.path.isfile('/app/ssl/privkey.pem'))
+    if (os.path.exists('/app/ssl')):
+        app.run(debug=True, host='0.0.0.0', ssl_context=('/app/ssl/cert.pem', '/app/ssl/privkey.pem'))
+    else:
+        app.run(debug=True, host='0.0.0.0')
 
 
