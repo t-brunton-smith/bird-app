@@ -142,6 +142,20 @@
             border-radius: 4px;
             cursor: pointer;
         }
+
+            button[type="button"], button[type="button"] {
+        box-sizing: border-box;
+        width: 100%;
+        height: 48px;
+        padding: 8px;
+        font-size: 16px;
+        border: none;
+        background-color: gray; /* Updated background-color */
+        color: #fff;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
     </style>
 </head>
 <body>
@@ -152,18 +166,26 @@
      alt="robin">
 <h1>Find Recent Bird Sightings</h1>
 <form method="get" action="/results">
+
     <div class="form-group">
         <label for="latitude">Latitude:</label>
         <input type="text" name="latitude" id="latitude" inputmode="text" pattern="-?\d+(\.\d+)?" required>
     </div>
+
     <div class="form-group">
         <label for="longitude">Longitude:</label>
         <input type="text" name="longitude" id="longitude" inputmode="text" pattern="-?\d+(\.\d+)?" required>
     </div>
+
+
+    <button type="button" class="btn btn-primary" id="use-location-button">Use my location</button>
     <div class="form-group">
         <button type="submit">Search</button>
     </div>
 </form>
+
+
+<script src="{{ url_for('static', filename='app.js') }}"></script>
 
 </body>
 </html>
