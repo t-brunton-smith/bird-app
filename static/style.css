@@ -2,3 +2,10 @@
     font-family: 'FlyingBird';
     src: url('fonts/flying-bird-font/FlyingBird-Yz9Ga.otf');
 }
+
+@font-face {
+  font-family: 'AntipastoPro';
+  src: url('fonts/antipasto/AntipastoPro_trial.ttf') format('truetype');
+  /* The @font-face rule is used to specify a custom font to be downloaded and used on the web page */
+  /* The format property specifies the format of the font file */
+}
