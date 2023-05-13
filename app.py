@@ -6,9 +6,11 @@ from flask import Flask, render_template, request, jsonify, redirect
 
 app = Flask(__name__)
 
+
 @app.errorhandler(404)
 def page_not_found(e):
     return render_template("404.html"), 404
+
 
 # Redirect all HTTP requests to HTTPS
 @app.before_request
@@ -18,11 +20,12 @@ def https_redirect():
         return redirect(url, code=301)
 
 
-@ app.route('/')
+@app.route('/')
 def index():
     return render_template('index.html')
 
-@ app.route('/results')
+
+@app.route('/results')
 def results():
     # Get the user's location from the form
     lat = request.args.get('latitude')
@@ -36,7 +39,6 @@ def results():
     # Make a request to the eBird API to get recent bird sightings in the user's location
     url = f'https://api.ebird.org/v2/data/obs/geo/recent?lat={lat}&lng={lng}&&maxResults=100&back=14'
 
-    # url = f'https://api.ebird.org/v2/data/obs/geo/recent?latlng={location}&maxResults=10'
     headers = {'X-eBirdApiToken': apitoken}
     response = requests.get(url, headers=headers)
 
@@ -51,6 +53,7 @@ def results():
     # Render the results template with the sightings
     return render_template('results.html', sightings=sightings)
 
+
 if __name__ == '__main__':
     # app.run(debug=True, host='0.0.0.0', ssl_context=('ssl/cert.pem', 'ssl/key.pem'))
     # print(os.listdir('/app/ssl'))
@@ -59,5 +62,3 @@ if __name__ == '__main__':
         app.run(debug=True, host='0.0.0.0', ssl_context=('/app/ssl/cert.pem', '/app/ssl/privkey.pem'))
     else:
         app.run(debug=True, host='0.0.0.0')
-
-
