@@ -2,9 +2,13 @@ import configparser
 import os
 
 import requests
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, jsonify
 
 app = Flask(__name__)
+
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template("404.html"), 404
 
 @ app.route('/')
 def index():
