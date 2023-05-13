@@ -2,13 +2,21 @@ import configparser
 import os
 
 import requests
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, redirect
 
 app = Flask(__name__)
 
 @app.errorhandler(404)
 def page_not_found(e):
     return render_template("404.html"), 404
+
+# Redirect all HTTP requests to HTTPS
+@app.before_request
+def https_redirect():
+    if not request.is_secure:
+        url = request.url.replace('http://', 'https://', 1)
+        return redirect(url, code=301)
+
 
 @ app.route('/')
 def index():
