@@ -54,7 +54,7 @@ def results():
     return render_template('results.html', sightings=sightings)
 
 @app.route('/notableresults')
-def results():
+def notableresults():
     # Get the user's location from the form
     lat = request.args.get('latitude')
     lng = request.args.get('longitude')
