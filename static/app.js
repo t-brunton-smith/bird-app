@@ -1,3 +1,4 @@
+// Get the users location
 function getUserLocation() {
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(fillLocationFields);
@@ -12,3 +13,22 @@ function fillLocationFields(position) {
 }
 
 document.getElementById("use-location-button").addEventListener("click", getUserLocation);
+
+// Toggle to get notable results
+const form = document.querySelector('form');
+const submitButton = document.querySelector('button[type="submit"]');
+
+form.addEventListener('submit', (event) => {
+  event.preventDefault();
+  const formData = new FormData(form);
+  const latitude = formData.get('latitude');
+  const longitude = formData.get('longitude');
+  const isNotable = document.getElementById('notable').checked;
+
+  let endpoint = '/results';
+  if (isNotable) {
+    endpoint = '/notableresults';
+  }
+
+  window.location.href = `${endpoint}?latitude=${latitude}&longitude=${longitude}`;
+});

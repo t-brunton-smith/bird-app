@@ -95,9 +95,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
 
-<!--    <title>-->
-<!--        Find Recent Bird Sightings-->
-<!--    </title>-->
+    <!--    <title>-->
+    <!--        Find Recent Bird Sightings-->
+    <!--    </title>-->
 
     <style>
         body {
@@ -142,18 +142,18 @@
             cursor: pointer;
         }
 
-            button[type="button"], button[type="button"] {
-        box-sizing: border-box;
-        width: 100%;
-        height: 48px;
-        padding: 8px;
-        font-size: 16px;
-        border: none;
-        background-color: gray; /* Updated background-color */
-        color: #fff;
-        border-radius: 4px;
-        cursor: pointer;
-    }
+        button[type="button"], button[type="button"] {
+            box-sizing: border-box;
+            width: 100%;
+            height: 48px;
+            padding: 8px;
+            font-size: 16px;
+            border: none;
+            background-color: gray; /* Updated background-color */
+            color: #fff;
+            border-radius: 4px;
+            cursor: pointer;
+        }
 
     </style>
 </head>
@@ -163,13 +163,14 @@
              {{ url_for('static', filename='icons/robin-lg.png') }} 1200w"
      sizes="(max-width: 767px) 100vw, 50vw"
      alt="robin">
-        <h1 style="font-family: 'FlyingBird', sans-serif;">Find Recent Bird Sightings</h1>
+<h1 style="font-family: 'FlyingBird', sans-serif;">Find Recent Bird Sightings</h1>
 
 <!--<h1>Find Recent Bird Sightings</h1>-->
 <form method="get" action="/results">
-<div class="jumbotron text-center">
-    <p class="lead" style="font-family: 'AntipastoPro', sans-serif;"> Enter a location to find recent bird sightings in that area.</p>
-</div>
+    <div class="jumbotron text-center">
+        <p class="lead" style="font-family: 'AntipastoPro', sans-serif;"> Enter a location to find recent bird sightings
+            in that area.</p>
+    </div>
 
     <div class="form-group" style="font-family: 'AntipastoPro', sans-serif;">
         <label for="latitude">Latitude:</label>
@@ -181,10 +182,21 @@
         <input type="text" name="longitude" id="longitude" inputmode="text" pattern="-?\d+(\.\d+)?" required>
     </div>
 
+    <div class="form-group" style="font-family: 'AntipastoPro', sans-serif;">
+        <label class="switch">
+            <input type="checkbox" name="notable" id="notable">
+            <span class="slider"></span>
+        </label>
+        <span>Notable sightings</span>
+    </div>
 
-    <button type="button" class="btn btn-primary" id="use-location-button" style="font-family: 'AntipastoPro', sans-serif;">Use my location</button>
+
+    <button type="button" class="btn btn-primary" id="use-location-button"
+            style="font-family: 'AntipastoPro', sans-serif;">Use my location
+    </button>
     <div class="form-group">
-        <button type="submit" style="font-family: 'AntipastoPro', sans-serif;">Search sightings at this location</button>
+        <button type="submit" style="font-family: 'AntipastoPro', sans-serif;">Search sightings at this location
+        </button>
     </div>
 </form>
 
