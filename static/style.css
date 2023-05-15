@@ -10,6 +10,13 @@
     /* The format property specifies the format of the font file */
 }
 
+@font-face {
+    font-family: 'AntipastoProLight';
+    src: url('fonts/antipasto/AntipastoPro-Light_trial.ttf') format('truetype');
+    /* The @font-face rule is used to specify a custom font to be downloaded and used on the web page */
+    /* The format property specifies the format of the font file */
+}
+
 /* Toggle switch styles */
 .switch {
     position: relative;
@@ -17,6 +24,8 @@
     width: 60px;
     height: 34px;
     margin-bottom: 16px;
+    font-family: 'AntipastoProLight';
+
 }
 
 .switch input {
