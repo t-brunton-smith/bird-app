@@ -12,17 +12,24 @@ def page_not_found(e):
     return render_template("404.html"), 404
 
 
-# Redirect all HTTP requests to HTTPS
-@app.before_request
-def https_redirect():
-    if not request.is_secure:
-        url = request.url.replace('http://', 'https://', 1)
-        return redirect(url, code=301)
+# # Redirect all HTTP requests to HTTPS
+# @app.before_request
+# def https_redirect():
+#     if not request.is_secure:
+#         url = request.url.replace('http://', 'https://', 1)
+#         return redirect(url, code=301)
 
 
 @app.route('/')
 def index():
     return render_template('index.html')
+
+@app.route("/location")
+def location():
+    lat = request.args.get('lat')
+    long = request.args.get('long')
+    location_name = coordinates_to_location(lat, long)
+    return location_name if location_name else "", 200
 
 
 @app.route('/results')
@@ -44,7 +51,6 @@ def notableresults():
 
     return results_from_coordinates(lat, lng, notable=True)
 
-
 def location_to_coordinates(location):
     # Get the users location
     location = request.args.get('location')
@@ -65,8 +71,12 @@ def location_to_coordinates(location):
     return None
 
 def coordinates_to_location(latitude, longitude):
+    config = configparser.ConfigParser()
+    config.read('configs/keys.ini')
+    apitoken = config['mapbox']['apitoken']
+
     """Reverse geocode a set of latitude and longitude coordinates into a location name using Mapbox Geocoding API"""
-    url = f"https://api.mapbox.com/geocoding/v5/mapbox.places/{longitude},{latitude}.json?access_token={access_token}"
+    url = f"https://api.mapbox.com/geocoding/v5/mapbox.places/{longitude},{latitude}.json?access_token={apitoken}"
     response = requests.get(url)
     if response.status_code == 200:
         data = response.json()
