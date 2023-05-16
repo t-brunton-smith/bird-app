@@ -12,17 +12,18 @@ def page_not_found(e):
     return render_template("404.html"), 404
 
 
-# # Redirect all HTTP requests to HTTPS
-# @app.before_request
-# def https_redirect():
-#     if not request.is_secure:
-#         url = request.url.replace('http://', 'https://', 1)
-#         return redirect(url, code=301)
+# Redirect all HTTP requests to HTTPS
+@app.before_request
+def https_redirect():
+    if not request.is_secure:
+        url = request.url.replace('http://', 'https://', 1)
+        return redirect(url, code=301)
 
 
 @app.route('/')
 def index():
     return render_template('index.html')
+
 
 @app.route("/location")
 def location():
@@ -35,26 +36,22 @@ def location():
 @app.route('/results')
 def results():
     # # Get the user's location from the form
-
     location = request.args.get('location')
-
     lat, lng = location_to_coordinates(location)
-
     return results_from_coordinates(lat, lng, notable=False)
+
 
 @app.route('/notableresults')
 def notableresults():
     # # Get the user's location from the form
     location = request.args.get('location')
-
     lat, lng = location_to_coordinates(location)
-
     return results_from_coordinates(lat, lng, notable=True)
+
 
 def location_to_coordinates(location):
     # Get the users location
     location = request.args.get('location')
-
 
     config = configparser.ConfigParser()
     config.read('configs/keys.ini')
@@ -69,6 +66,7 @@ def location_to_coordinates(location):
             coordinates = data['features'][0]['center']
             return tuple(coordinates[::-1])  # return coordinates as (latitude, longitude)
     return None
+
 
 def coordinates_to_location(latitude, longitude):
     config = configparser.ConfigParser()
@@ -85,8 +83,8 @@ def coordinates_to_location(latitude, longitude):
             return location
     return None
 
-def results_from_coordinates(lat, lng, notable=False):
 
+def results_from_coordinates(lat, lng, notable=False):
     # Read the API token from the configs/keys.ini file
     config = configparser.ConfigParser()
     config.read('configs/keys.ini')
@@ -111,7 +109,6 @@ def results_from_coordinates(lat, lng, notable=False):
 
     # Render the results template with the sightings
     return render_template('results.html', sightings=sightings)
-
 
 
 if __name__ == '__main__':
