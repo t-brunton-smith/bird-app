@@ -21,8 +21,10 @@ const submitButton = document.querySelector('button[type="submit"]');
 form.addEventListener('submit', (event) => {
   event.preventDefault();
   const formData = new FormData(form);
-  const latitude = formData.get('latitude');
-  const longitude = formData.get('longitude');
+  // const latitude = formData.get('latitude');
+  // const longitude = formData.get('longitude');
+  const location = formData.get('location');
+
   const isNotable = document.getElementById('notable').checked;
 
   let endpoint = '/results';
@@ -30,5 +32,6 @@ form.addEventListener('submit', (event) => {
     endpoint = '/notableresults';
   }
 
-  window.location.href = `${endpoint}?latitude=${latitude}&longitude=${longitude}`;
+  // window.location.href = `${endpoint}?latitude=${latitude}&longitude=${longitude}`;
+  window.location.href = `${endpoint}?location=${location}`;
 });

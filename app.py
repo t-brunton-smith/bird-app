@@ -27,37 +27,55 @@ def index():
 
 @app.route('/results')
 def results():
-    # Get the user's location from the form
-    lat = request.args.get('latitude')
-    lng = request.args.get('longitude')
+    # # Get the user's location from the form
 
-    # Read the API token from the configs/keys.ini file
-    config = configparser.ConfigParser()
-    config.read('configs/keys.ini')
-    apitoken = config['ebird']['apitoken']
+    location = request.args.get('location')
 
-    # Make a request to the eBird API to get recent bird sightings in the user's location
-    url = f'https://api.ebird.org/v2/data/obs/geo/recent?lat={lat}&lng={lng}&&maxResults=100&back=14'
+    lat, lng = location_to_coordinates(location)
 
-    headers = {'X-eBirdApiToken': apitoken}
-    response = requests.get(url, headers=headers)
-
-    # Parse the JSON response and extract the relevant information
-    sightings = []
-    for sighting in response.json():
-        species_name = sighting['comName']
-        date = sighting['obsDt']
-        location_name = sighting['locName']
-        sightings.append((species_name, date, location_name))
-
-    # Render the results template with the sightings
-    return render_template('results.html', sightings=sightings)
+    return results_from_coordinates(lat, lng, notable=False)
 
 @app.route('/notableresults')
 def notableresults():
-    # Get the user's location from the form
-    lat = request.args.get('latitude')
-    lng = request.args.get('longitude')
+    # # Get the user's location from the form
+    location = request.args.get('location')
+
+    lat, lng = location_to_coordinates(location)
+
+    return results_from_coordinates(lat, lng, notable=True)
+
+
+def location_to_coordinates(location):
+    # Get the users location
+    location = request.args.get('location')
+
+
+    config = configparser.ConfigParser()
+    config.read('configs/keys.ini')
+    apitoken = config['mapbox']['apitoken']
+
+    """Convert a location string to latitude and longitude coordinates using Mapbox Geocoding API"""
+    url = f"https://api.mapbox.com/geocoding/v5/mapbox.places/{location}.json?access_token={apitoken}"
+    response = requests.get(url)
+    if response.status_code == 200:
+        data = response.json()
+        if len(data['features']) > 0:
+            coordinates = data['features'][0]['center']
+            return tuple(coordinates[::-1])  # return coordinates as (latitude, longitude)
+    return None
+
+def coordinates_to_location(latitude, longitude):
+    """Reverse geocode a set of latitude and longitude coordinates into a location name using Mapbox Geocoding API"""
+    url = f"https://api.mapbox.com/geocoding/v5/mapbox.places/{longitude},{latitude}.json?access_token={access_token}"
+    response = requests.get(url)
+    if response.status_code == 200:
+        data = response.json()
+        if len(data['features']) > 0:
+            location = data['features'][0]['place_name']
+            return location
+    return None
+
+def results_from_coordinates(lat, lng, notable=False):
 
     # Read the API token from the configs/keys.ini file
     config = configparser.ConfigParser()
@@ -65,7 +83,10 @@ def notableresults():
     apitoken = config['ebird']['apitoken']
 
     # Make a request to the eBird API to get recent bird sightings in the user's location
-    url = f'https://api.ebird.org/v2/data/obs/geo/recent/notable?lat={lat}&lng={lng}&&maxResults=100&back=14'
+    if notable:
+        url = f'https://api.ebird.org/v2/data/obs/geo/recent/notable?lat={lat}&lng={lng}&&maxResults=100&back=14'
+    else:
+        url = f'https://api.ebird.org/v2/data/obs/geo/recent?lat={lat}&lng={lng}&&maxResults=100&back=14'
 
     headers = {'X-eBirdApiToken': apitoken}
     response = requests.get(url, headers=headers)
@@ -80,6 +101,7 @@ def notableresults():
 
     # Render the results template with the sightings
     return render_template('results.html', sightings=sightings)
+
 
 
 if __name__ == '__main__':
