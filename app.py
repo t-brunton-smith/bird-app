@@ -1,8 +1,9 @@
 import configparser
 import os
 
+import folium as folium
 import requests
-from flask import Flask, render_template, request, jsonify, redirect
+from flask import Flask, render_template, render_template_string, request, jsonify, redirect
 
 app = Flask(__name__)
 
@@ -109,6 +110,40 @@ def results_from_coordinates(lat, lng, notable=False):
 
     # Render the results template with the sightings
     return render_template('results.html', sightings=sightings)
+
+
+def create_map_with_pins(locations, center_location):
+    """
+    Create a map with pins at specified latitude and longitude locations using Folium.
+    locations: list of tuples representing latitude and longitude coordinates
+    center_location: tuple representing the latitude and longitude of the center location
+    """
+    map_obj = folium.Map(location=[center_location[0], center_location[1]], zoom_start=10, control_scale=True)
+
+    folium.Marker(location=[center_location[0], center_location[1]], icon=folium.Icon(icon='map-marker', color='red')).add_to(map_obj)
+    for location in locations:
+        folium.Marker(location=[location[0], location[1]], icon=folium.Icon(icon='map-marker')).add_to(map_obj)
+
+    return map_obj
+
+@app.route('/map')
+def map_endpoint(qq):
+    # Define your locations here
+    locations = [(38.9359287, -74.9434519),
+ (38.9319186, -74.9539848),
+ (39.1049766, -74.8948436)]
+
+    center_location=(39, -75)
+
+    # Create the map using the provided function
+    map_obj = create_map_with_pins(locations, center_location)
+
+    # Save the map as HTML
+    map_html = map_obj.get_root().render()
+
+    # Render the map HTML template
+    return render_template_string(map_html)
+
 
 
 if __name__ == '__main__':
