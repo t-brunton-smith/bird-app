@@ -3,6 +3,7 @@
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+    <script src="{{ url_for('static', filename='js/index.js') }}"></script>
 
     <!--    <title>-->
     <!--        Find Recent Bird Sightings-->
@@ -76,25 +77,32 @@
 
 <!--<h1>Find Recent Bird Sightings</h1>-->
 <form method="get" action="/results">
+    <label for="search-option">Search option:</label>
+    <select id="search-option" name="search-option">
+        <option value="location">Search recent sightings by location</option>
+        <option value="locationSpecies">Search recent sightings of a species by location</option>
+    </select>
+
     <div class="jumbotron text-center">
         <p class="lead" style="font-family: 'AntipastoPro', sans-serif;"> Enter a location to find recent bird sightings
             in that area.</p>
     </div>
 
-<!--    <div class="form-group" style="font-family: 'AntipastoPro', sans-serif;">-->
-<!--        <label for="latitude">Latitude:</label>-->
-<!--        <input type="text" name="latitude" id="latitude" inputmode="text" pattern="-?\d+(\.\d+)?" required>-->
-<!--    </div>-->
+    <!--    <div class="form-group" style="font-family: 'AntipastoPro', sans-serif;">-->
+    <!--        <label for="latitude">Latitude:</label>-->
+    <!--        <input type="text" name="latitude" id="latitude" inputmode="text" pattern="-?\d+(\.\d+)?" required>-->
+    <!--    </div>-->
 
-<!--    <div class="form-group" style="font-family: 'AntipastoPro', sans-serif;">-->
-<!--        <label for="longitude">Longitude:</label>-->
-<!--        <input type="text" name="longitude" id="longitude" inputmode="text" pattern="-?\d+(\.\d+)?" required>-->
-<!--    </div>-->
+    <!--    <div class="form-group" style="font-family: 'AntipastoPro', sans-serif;">-->
+    <!--        <label for="longitude">Longitude:</label>-->
+    <!--        <input type="text" name="longitude" id="longitude" inputmode="text" pattern="-?\d+(\.\d+)?" required>-->
+    <!--    </div>-->
 
     <div class="form-group" style="font-family: 'AntipastoPro', sans-serif;">
         <label for="location">Location:</label>
         <input type="text" name="location" id="location" inputmode="text" required>
     </div>
+
 
     <div class="form-group" style="font-family: 'AntipastoPro', sans-serif;">
         <label class="switch">
@@ -109,9 +117,9 @@
             style="font-family: 'AntipastoPro', sans-serif;">Use my location
     </button>
 
-<!--    <button type="button" class="btn btn-primary" id="search-location-button"-->
-<!--            style="font-family: 'AntipastoPro', sans-serif;">Search by location-->
-<!--    </button>-->
+    <!--    <button type="button" class="btn btn-primary" id="search-location-button"-->
+    <!--            style="font-family: 'AntipastoPro', sans-serif;">Search by location-->
+    <!--    </button>-->
 
     <div class="form-group">
         <button type="submit" style="font-family: 'AntipastoPro', sans-serif;">Search sightings at this location

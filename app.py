@@ -120,23 +120,27 @@ def create_map_with_pins(locations, center_location):
     """
     map_obj = folium.Map(location=[center_location[0], center_location[1]], zoom_start=10, control_scale=True)
 
-    folium.Marker(location=[center_location[0], center_location[1]], icon=folium.Icon(icon='map-marker', color='red')).add_to(map_obj)
+    folium.Marker(location=[center_location[0], center_location[1]],
+                  icon=folium.Icon(icon='map-marker', color='red')).add_to(map_obj)
     for location in locations:
         folium.Marker(location=[location[0], location[1]], icon=folium.Icon(icon='map-marker')).add_to(map_obj)
 
     return map_obj
 
-@app.route('/map')
-def map_endpoint(qq):
-    # Define your locations here
-    locations = [(38.9359287, -74.9434519),
- (38.9319186, -74.9539848),
- (39.1049766, -74.8948436)]
 
-    center_location=(39, -75)
+@app.route('/map')
+def map_endpoint():
+    center_location = request.args.get('center_location')
+    lat, lng = location_to_coordinates(center_location)
+    center_coordinates = (lat, lng)
+
+    species_code = request.args.get('species_code')
+
+    # Get the coordinates for sightings of this species
+    sighting_coordinates = get_species_sightings_at_coordinates(center_coordinates, species_code)
 
     # Create the map using the provided function
-    map_obj = create_map_with_pins(locations, center_location)
+    map_obj = create_map_with_pins(sighting_coordinates, center_coordinates)
 
     # Save the map as HTML
     map_html = map_obj.get_root().render()
@@ -144,6 +148,26 @@ def map_endpoint(qq):
     # Render the map HTML template
     return render_template_string(map_html)
 
+
+def get_species_sightings_at_coordinates(coordinates, species_code):
+    center_lat, center_lng = coordinates
+
+    config = configparser.ConfigParser()
+    config.read('configs/keys.ini')
+
+    apitoken = config['ebird']['apitoken']
+    headers = {'X-eBirdApiToken': apitoken}
+
+    url = f"https://api.ebird.org/v2/data/obs/geo/recent/{species_code}?lat={center_lat}&lng={center_lng}"
+
+    response = requests.get(url, headers=headers)
+    results = response.json()
+
+    sighting_locations = []
+    for this in results:
+        sighting_locations.append((this['lat'], this['lng']))
+
+    return sighting_locations
 
 
 if __name__ == '__main__':
