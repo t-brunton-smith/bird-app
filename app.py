@@ -4,6 +4,7 @@ import os
 import folium as folium
 import requests
 from flask import Flask, render_template, render_template_string, request, jsonify, redirect
+import pandas as pd
 
 app = Flask(__name__)
 
@@ -134,9 +135,13 @@ def map_endpoint():
     lat, lng = location_to_coordinates(center_location)
     center_coordinates = (lat, lng)
 
-    species_code = request.args.get('species_code')
+    # Get the name
+    species_name = request.args.get('species_name')
 
-    # Get the coordinates for sightings of this species
+    # Convert name to species code
+    species_code = species_name_to_code(species_name)
+
+    # Get the coordinates for sightings of this species code
     sighting_coordinates = get_species_sightings_at_coordinates(center_coordinates, species_code)
 
     # Create the map using the provided function
@@ -147,6 +152,22 @@ def map_endpoint():
 
     # Render the map HTML template
     return render_template_string(map_html)
+
+
+def species_name_to_code(species_name):
+    df_tax = pd.read_csv("data/ebird_taxonomy.csv")
+
+    # Lower case the species names
+    df_tax['COMMON_NAME'] = df_tax['COMMON_NAME'].apply(str.lower)
+    species_name = species_name.lower()
+    dict_tax = pd.Series(df_tax.SPECIES_CODE.values, index=df_tax.COMMON_NAME).to_dict()
+
+    print(dict_tax)
+    if species_name in dict_tax.keys():
+        return dict_tax[species_name]
+    else:
+        return None
+
 
 
 def get_species_sightings_at_coordinates(coordinates, species_code):
