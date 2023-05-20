@@ -115,19 +115,25 @@ def results_from_coordinates(lat, lng, notable=False):
     return render_template('results.html', sightings=sightings)
 
 
-def create_map_with_pins(locations, center_location):
+def create_map_with_pins(locations, center_location, map_title):
     """
     Create a map with pins at specified latitude and longitude locations using Folium.
     locations: list of tuples representing latitude and longitude coordinates
     center_location: tuple representing the latitude and longitude of the center location
     """
-    map_obj = folium.Map(location=[center_location[0], center_location[1]], zoom_start=10, control_scale=True)
+    map_obj = folium.Map(location=[center_location[0], center_location[1]], zoom_start=10, control_scale=True,
+                         tiles="Stamen Terrain")
 
     folium.Marker(location=[center_location[0], center_location[1]],
                   icon=folium.Icon(icon='map-marker', color='red')).add_to(map_obj)
-    for location in locations:
-        folium.Marker(location=[location[0], location[1]], icon=folium.Icon(icon='map-marker'), popup=f"{location[2]}").add_to(map_obj)
+    for this_location in locations:
+        (lat, lng, comName, obsDt, howMany) = this_location
+        folium.Marker(location=[lat, lng], icon=folium.Icon(icon='map-marker'),
+                      popup=f"{comName}\n{obsDt}\nNum: {howMany}").add_to(map_obj)
 
+
+    title_html = f'<h3 align="center" style="font-size:24px"><b>{map_title}</b></h3>'
+    map_obj.get_root().html.add_child(folium.Element(title_html))
     return map_obj
 
 
@@ -137,17 +143,44 @@ def map_endpoint():
     lat, lng = location_to_coordinates(center_location)
     center_coordinates = (lat, lng)
 
-    # Get the name
-    species_name = request.args.get('species_name')
+    # Check if notable
+    try:
+        notable = request.args.get('notable')
+        if notable == 'on':
+            notable = True
+        else:
+            notable = False
+    except:
+        notable = False
+
+    # Get the name of the species
+    try:
+        species_name = request.args.get('species_name')
+        if species_name:
+            pass
+        else:
+            species_name = ''
+    except:
+        species_name = False
 
     # Convert name to species code
     species_code = species_name_to_code(species_name)
 
     # Get the coordinates for sightings of this species code
-    sighting_coordinates = get_species_sightings_at_coordinates(center_coordinates, species_code)
+    sighting_coordinates = get_species_sightings_at_coordinates(center_coordinates, notable, species_code)
+
+    # Get the map title
+    if notable and species_code:
+        map_title = f'Map of recent sightings of notable {species_name}s'
+    elif notable:
+        map_title = 'Map of recent sightings notable species'
+    elif species_code:
+        map_title = f'Map of recent sightings of {species_name}s'
+    else:
+        map_title = f'Map of recent sightings of all species'
 
     # Create the map using the provided function
-    map_obj = create_map_with_pins(sighting_coordinates, center_coordinates)
+    map_obj = create_map_with_pins(sighting_coordinates, center_coordinates, map_title)
 
     # Save the map as HTML
     map_html = map_obj.get_root().render()
@@ -171,7 +204,7 @@ def species_name_to_code(species_name):
         return None
 
 
-def get_species_sightings_at_coordinates(coordinates, species_code=None):
+def get_species_sightings_at_coordinates(coordinates, notable=False, species_code=None):
     center_lat, center_lng = coordinates
 
     config = configparser.ConfigParser()
@@ -183,7 +216,10 @@ def get_species_sightings_at_coordinates(coordinates, species_code=None):
     if species_code:
         url = f"https://api.ebird.org/v2/data/obs/geo/recent/{species_code}?lat={center_lat}&lng={center_lng}"
     else:
-        url = f"https://api.ebird.org/v2/data/obs/geo/recent?lat={center_lat}&lng={center_lng}"
+        if notable:
+            url = f'https://api.ebird.org/v2/data/obs/geo/recent/notable?lat={center_lat}&lng={center_lng}&&maxResults=100&back=14'
+        else:
+            url = f"https://api.ebird.org/v2/data/obs/geo/recent?lat={center_lat}&lng={center_lng}"
 
 
     response = requests.get(url, headers=headers)
@@ -191,7 +227,17 @@ def get_species_sightings_at_coordinates(coordinates, species_code=None):
 
     sighting_locations = []
     for this in results:
-        sighting_locations.append((this['lat'], this['lng'], this['comName']))
+        lat = this['lat'] if 'lat' in this.keys() else None
+        lng = this['lng'] if 'lng' in this.keys() else None
+        comName = this['comName'] if 'comName' in this.keys() else None
+        if all((lat, lng, comName)):
+            pass
+        else:
+            continue
+        obsDt = this['obsDt'] if 'obsDt' in this.keys() else None
+        howMany = this['howMany'] if 'howMany' in this.keys() else None
+
+        sighting_locations.append((lat, lng, comName, obsDt, howMany))
 
     return sighting_locations
 
