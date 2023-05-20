@@ -126,7 +126,7 @@ def create_map_with_pins(locations, center_location):
     folium.Marker(location=[center_location[0], center_location[1]],
                   icon=folium.Icon(icon='map-marker', color='red')).add_to(map_obj)
     for location in locations:
-        folium.Marker(location=[location[0], location[1]], icon=folium.Icon(icon='map-marker')).add_to(map_obj)
+        folium.Marker(location=[location[0], location[1]], icon=folium.Icon(icon='map-marker'), popup=f"{location[2]}").add_to(map_obj)
 
     return map_obj
 
@@ -171,7 +171,7 @@ def species_name_to_code(species_name):
         return None
 
 
-def get_species_sightings_at_coordinates(coordinates, species_code):
+def get_species_sightings_at_coordinates(coordinates, species_code=None):
     center_lat, center_lng = coordinates
 
     config = configparser.ConfigParser()
@@ -180,14 +180,18 @@ def get_species_sightings_at_coordinates(coordinates, species_code):
     apitoken = config['ebird']['apitoken']
     headers = {'X-eBirdApiToken': apitoken}
 
-    url = f"https://api.ebird.org/v2/data/obs/geo/recent/{species_code}?lat={center_lat}&lng={center_lng}"
+    if species_code:
+        url = f"https://api.ebird.org/v2/data/obs/geo/recent/{species_code}?lat={center_lat}&lng={center_lng}"
+    else:
+        url = f"https://api.ebird.org/v2/data/obs/geo/recent?lat={center_lat}&lng={center_lng}"
+
 
     response = requests.get(url, headers=headers)
     results = response.json()
 
     sighting_locations = []
     for this in results:
-        sighting_locations.append((this['lat'], this['lng']))
+        sighting_locations.append((this['lat'], this['lng'], this['comName']))
 
     return sighting_locations
 
