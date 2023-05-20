@@ -65,6 +65,14 @@
             cursor: pointer;
         }
 
+        .button-container {
+            display: flex;
+            justify-content: center;
+        }
+
+        .button-container button {
+            margin: 0 5px;
+        }
     </style>
 </head>
 <body>
@@ -76,14 +84,51 @@
 <h1 style="font-family: 'FlyingBird', sans-serif;">Find Recent Bird Sightings</h1>
 
 <!--<h1>Find Recent Bird Sightings</h1>-->
-<form id="myForm" method="get" action="">
-    <label for="search-option" style="font-family: 'AntipastoPro', sans-serif;">Search option:</label>
-    <select id="search-option" style="font-family: 'AntipastoPro', sans-serif;" name="search-option">
-        <option value="default">Select a way to search</option>
-        <option value="location">Search recent sightings by location</option>
-        <option value="locationSpecies">Search recent sightings of a species by location</option>
-    </select>
+<!--<form id="myForm" method="get" action="">-->
+<!--    <label for="search-option" style="font-family: 'AntipastoPro', sans-serif;">Search option:</label>-->
+<!--    <select id="search-option" style="font-family: 'AntipastoPro', sans-serif;" name="search-option">-->
+<!--        <option value="default">Select a way to search</option>-->
+<!--        <option value="location">Search recent sightings by location</option>-->
+<!--        <option value="locationSpecies">Search recent sightings of a species by location</option>-->
+<!--    </select>-->
 
+<!--    <div class="jumbotron text-center">-->
+<!--        <p class="lead" style="font-family: 'AntipastoPro', sans-serif;"> Enter a location to find recent bird sightings-->
+<!--            in that area.</p>-->
+<!--    </div>-->
+
+<!--    <div class="form-group" style="font-family: 'AntipastoPro', sans-serif;">-->
+<!--        <label for="location">Location:</label>-->
+<!--        <input type="text" name="location" id="location" inputmode="text" required>-->
+<!--    </div>-->
+
+<!--    <div class="form-group" style="font-family: 'AntipastoPro', sans-serif;">-->
+<!--        <label for="species_name">Species name (optional):</label>-->
+<!--        <input type="text" name="species_name" id="species_name" inputmode="text">-->
+<!--    </div>-->
+<!---->
+<!---->
+<!--    <div class="form-group" style="font-family: 'AntipastoPro', sans-serif;">-->
+<!--        <label class="switch">-->
+<!--            <input type="checkbox" name="notable" id="notable">-->
+<!--            <span class="slider"></span>-->
+<!--        </label>-->
+<!--        <span>Notable sightings</span>-->
+<!--    </div>-->
+
+
+<!--    <button type="button" class="btn btn-primary" id="use-location-button"-->
+<!--            style="font-family: 'AntipastoPro', sans-serif;">Use my location-->
+<!--    </button>-->
+
+<!--    <div class="form-group">-->
+<!--        <button type="submit" style="font-family: 'AntipastoPro', sans-serif;">Search sightings at this location-->
+<!--        </button>-->
+<!--    </div>-->
+<!--</form>-->
+
+
+<form id="dataForm" method="get">
     <div class="jumbotron text-center">
         <p class="lead" style="font-family: 'AntipastoPro', sans-serif;"> Enter a location to find recent bird sightings
             in that area.</p>
@@ -91,12 +136,12 @@
 
     <div class="form-group" style="font-family: 'AntipastoPro', sans-serif;">
         <label for="location">Location:</label>
-        <input type="text" name="location" id="location" inputmode="text" required>
+        <input type="text" id="location" name="location" required><br><br>
     </div>
 
     <div class="form-group" style="font-family: 'AntipastoPro', sans-serif;">
-        <label for="species_name">Species name (optional):</label>
-        <input type="text" name="species_name" id="species_name" inputmode="text">
+        <label for="species_name">Species Name (optional):</label>
+        <input type="text" id="species_name" name="species_name"><br><br>
     </div>
 
 
@@ -108,35 +153,38 @@
         <span>Notable sightings</span>
     </div>
 
-
     <button type="button" class="btn btn-primary" id="use-location-button"
             style="font-family: 'AntipastoPro', sans-serif;">Use my location
     </button>
 
-    <!--    <button type="button" class="btn btn-primary" id="search-location-button"-->
-    <!--            style="font-family: 'AntipastoPro', sans-serif;">Search by location-->
-    <!--    </button>-->
-
-    <div class="form-group">
-        <button type="submit" style="font-family: 'AntipastoPro', sans-serif;">Search sightings at this location
-        </button>
+    <div class="button-container">
+        <button type="submit" onclick="submitForm('/results')">List View</button>
+        <button type="submit" onclick="submitForm('/map')">Map View</button>
     </div>
+
 </form>
 
+<!--<script>-->
+<!--    var form = document.getElementById("myForm");-->
+<!--    var select = document.getElementById("search-option");-->
 
-<script>
-    var form = document.getElementById("myForm");
-    var select = document.getElementById("search-option");
+<!--    select.addEventListener("change", function () {-->
+<!--        if (select.value === "location") {-->
+<!--            form.action = "/results";-->
+<!--        } else {-->
+<!--            form.action = "/map";-->
+<!--        }-->
+<!--    });-->
+<!--</script>-->
 
-    select.addEventListener("change", function() {
-        if (select.value === "location") {
-            form.action = "/results";
-        } else {
-            form.action = "/map";
-        }
-    });
-</script>
 <script src="{{ url_for('static', filename='app.js') }}"></script>
 
+<script>
+    function submitForm(endpoint) {
+        var form = document.getElementById('dataForm');
+        form.action = endpoint;
+        form.submit();
+    }
+</script>
 </body>
 </html>
