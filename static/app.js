@@ -1,4 +1,3 @@
-document.addEventListener('DOMContentLoaded', function () {
     // User's current location
     function getUserLocation() {
         if (navigator.geolocation) {
@@ -27,4 +26,3 @@ document.addEventListener('DOMContentLoaded', function () {
 
     document.getElementById("use-location-button").addEventListener("click", getUserLocation);
 
-});
