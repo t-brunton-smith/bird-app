@@ -49,8 +49,12 @@ def results():
     except:
         notable = False
 
-    lat, lng = location_to_coordinates(location)
-    return results_from_coordinates(lat, lng, notable=notable)
+    try:
+        lat, lng = location_to_coordinates(location)
+        return results_from_coordinates(lat, lng, notable=notable)
+    except:
+        return render_template('loc_not_found.html', location=location)
+
 
 
 def location_to_coordinates(location):

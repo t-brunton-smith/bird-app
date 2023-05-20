@@ -128,9 +128,14 @@
 
 <script>
     function submitForm(endpoint) {
+        var locationInput = document.getElementById('location');
         var speciesName = document.getElementById('species_name').value;
         var notableToggle = document.getElementById('notable');
 
+        if (locationInput.value === '') {
+            alert('Please enter a location.');
+            return;
+        }
         if (speciesName && notableToggle.checked) {
             alert('Please either clear the Species Name field or disable the Notable toggle.');
             document.getElementById('species_name').value = ''; // Clear the Species Name box

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Location Not Found</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        p {
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Location Not Found</h1>
+    <p>The specified location "<span id="location"></span>" could not be found. Please try again with a different location.</p>
+    <p><a href="/">Go back to the homepage</a></p>
+</div>
+
+<script>
+    // Get the location and improper location from the query parameters
+    var urlParams = new URLSearchParams(window.location.search);
+    var location = urlParams.get('location');
+
+    // Update the text content of the elements
+    document.getElementById('location').textContent = location || '';
+
+</body>
+</html>
