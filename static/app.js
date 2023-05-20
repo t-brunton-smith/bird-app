@@ -27,44 +27,4 @@ document.addEventListener('DOMContentLoaded', function () {
 
     document.getElementById("use-location-button").addEventListener("click", getUserLocation);
 
-
-    // Toggle to get notable results
-    const form = document.getElementById('myForm');
-    var select = document.getElementById("search-option");
-    const submitButton = form.querySelector('button[type="submit"]');
-
-
-    select.addEventListener("change", function () {
-        if (select.value === "location") {
-            form.addEventListener('submit', (event) => {
-                event.preventDefault();
-                const formData = new FormData(form);
-                // const latitude = formData.get('latitude');
-                // const longitude = formData.get('longitude');
-                const location = formData.get('location');
-
-                const isNotable = document.getElementById('notable').checked;
-
-                let endpoint = '/results';
-                form.action = "/results";
-                if (isNotable) {
-                    endpoint = '/notableresults';
-                    form.action = "/notableresults";
-
-                }
-
-                // window.location.href = `${endpoint}?latitude=${latitude}&longitude=${longitude}`;
-                window.location.href = `${endpoint}?location=${location}`;
-
-            });
-        } else if (select.value === "locationSpecies") {
-            const location = formData.get('location');
-            const species_name = formData.get('species_name');
-            let endpoint = '/map';
-            form.action = "/map";
-            window.location.href = `${endpoint}?species_name=${species_name}?location=${location}`;
-
-        }
-    });
-
 });

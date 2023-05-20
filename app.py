@@ -39,16 +39,18 @@ def location():
 def results():
     # # Get the user's location from the form
     location = request.args.get('location')
-    lat, lng = location_to_coordinates(location)
-    return results_from_coordinates(lat, lng, notable=False)
 
+    try:
+        notable = request.args.get('notable')
+        if notable == 'on':
+            notable = True
+        else:
+            notable = False
+    except:
+        notable = False
 
-@app.route('/notableresults')
-def notableresults():
-    # # Get the user's location from the form
-    location = request.args.get('location')
     lat, lng = location_to_coordinates(location)
-    return results_from_coordinates(lat, lng, notable=True)
+    return results_from_coordinates(lat, lng, notable=notable)
 
 
 def location_to_coordinates(location):
@@ -167,7 +169,6 @@ def species_name_to_code(species_name):
         return dict_tax[species_name]
     else:
         return None
-
 
 
 def get_species_sightings_at_coordinates(coordinates, species_code):
