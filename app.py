@@ -50,8 +50,15 @@ def results():
         notable = False
 
     try:
+        species_name = request.args.get('species_name')
+        species_code = species_name_to_code(species_name)
+    except:
+        species_name = None
+        species_code = None
+
+    try:
         lat, lng = location_to_coordinates(location)
-        return results_from_coordinates(lat, lng, notable=notable)
+        return results_from_coordinates(lat, lng, notable=notable, species_code=species_code)
     except:
         return render_template('loc_not_found.html', location=location)
 
@@ -92,7 +99,7 @@ def coordinates_to_location(latitude, longitude):
     return None
 
 
-def results_from_coordinates(lat, lng, notable=False):
+def results_from_coordinates(lat, lng, notable=False, species_code=None):
     # Read the API token from the configs/keys.ini file
     config = configparser.ConfigParser()
     config.read('configs/keys.ini')
@@ -102,7 +109,10 @@ def results_from_coordinates(lat, lng, notable=False):
     if notable:
         url = f'https://api.ebird.org/v2/data/obs/geo/recent/notable?lat={lat}&lng={lng}&&maxResults=100&back=14'
     else:
-        url = f'https://api.ebird.org/v2/data/obs/geo/recent?lat={lat}&lng={lng}&&maxResults=100&back=14'
+        if species_code:
+            url = f"https://api.ebird.org/v2/data/obs/geo/recent/{species_code}?lat={lat}&lng={lng}&&maxResults=100&back=14"
+        else:
+            url = f'https://api.ebird.org/v2/data/obs/geo/recent?lat={lat}&lng={lng}&&maxResults=100&back=14'
 
     headers = {'X-eBirdApiToken': apitoken}
     response = requests.get(url, headers=headers)
