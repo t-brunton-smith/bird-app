@@ -9,11 +9,6 @@ import pandas as pd
 app = Flask(__name__)
 
 
-@app.errorhandler(404)
-def page_not_found(e):
-    return render_template("404.html"), 404
-
-
 # Redirect all HTTP requests to HTTPS
 @app.before_request
 def https_redirect():
