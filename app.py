@@ -58,7 +58,6 @@ def results():
         return render_template('loc_not_found.html', location=location)
 
 
-
 def location_to_coordinates(location):
     # Get the users location
     location = request.args.get('location')
@@ -125,13 +124,33 @@ def results_from_coordinates(lat, lng, notable=False, species_code=None):
 
 
 def create_map_with_pins(locations, center_location, map_title):
+    config = configparser.ConfigParser()
+    config.read('configs/keys.ini')
     """
     Create a map with pins at specified latitude and longitude locations using Folium.
     locations: list of tuples representing latitude and longitude coordinates
     center_location: tuple representing the latitude and longitude of the center location
     """
     map_obj = folium.Map(location=[center_location[0], center_location[1]], zoom_start=10, control_scale=True,
-                         tiles="Stamen Terrain")
+                         )
+    apitoken = config['stadia']['apitoken']
+
+    # Stamen terrain background
+    tile_url, attribution = 'https://tiles.stadiamaps.com/tiles/stamen_terrain/{z}/{x}/{y}{r}.png', '''&copy; <a href="https://stadiamaps.com/" target="_blank">Stadia Maps</a>
+                    &copy; <a href="https://stamen.com/" target="_blank">Stamen Design</a>
+                    &copy; <a href="https://openmaptiles.org/" target="_blank">OpenMapTiles</a>
+                    &copy; <a href="https://www.openstreetmap.org/about/" target="_blank">OpenStreetMap contributors</a>
+                    '''
+
+    # # Topographical
+    # tile_url, attribution = 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)'
+
+    # # Satellite
+    tile_url, attribution = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+
+    folium.TileLayer(tiles=tile_url,
+                     attr=attribution,
+                     API_key=apitoken).add_to(map_obj)
 
     folium.Marker(location=[center_location[0], center_location[1]],
                   icon=folium.Icon(icon='map-marker', color='red')).add_to(map_obj)
@@ -139,7 +158,6 @@ def create_map_with_pins(locations, center_location, map_title):
         (lat, lng, comName, obsDt, howMany) = this_location
         folium.Marker(location=[lat, lng], icon=folium.Icon(icon='map-marker'),
                       popup=f"{comName}\n{obsDt}\nNum: {howMany}").add_to(map_obj)
-
 
     title_html = f'<h3 align="center" style="font-size:24px"><b>{map_title}</b></h3>'
     map_obj.get_root().html.add_child(folium.Element(title_html))
@@ -229,7 +247,6 @@ def get_species_sightings_at_coordinates(coordinates, notable=False, species_cod
             url = f'https://api.ebird.org/v2/data/obs/geo/recent/notable?lat={center_lat}&lng={center_lng}&&maxResults=100&back=14'
         else:
             url = f"https://api.ebird.org/v2/data/obs/geo/recent?lat={center_lat}&lng={center_lng}"
-
 
     response = requests.get(url, headers=headers)
     results = response.json()
