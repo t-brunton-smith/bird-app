@@ -273,6 +273,6 @@ if __name__ == '__main__':
     # print(os.listdir('/app/ssl'))
     # print(os.path.isfile('/app/ssl/privkey.pem'))
     if (os.path.exists('/app/ssl')):
-        app.run(debug=True, host='0.0.0.0', ssl_context=('/app/ssl/cert.pem', '/app/ssl/privkey.pem'))
+        app.run(debug=True, host='0.0.0.0', ssl_context=('/app/ssl/cert2.pem', '/app/ssl/privkey2.pem'))
     else:
         app.run(debug=True, host='0.0.0.0')
