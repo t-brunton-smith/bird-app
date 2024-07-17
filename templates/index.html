@@ -80,9 +80,14 @@
     </style>
 </head>
 <body>
-<img src="{{ url_for('static', filename='icons/robin-sm.png') }}"
-     srcset="{{ url_for('static', filename='icons/robin-md.png') }} 768w,
-             {{ url_for('static', filename='icons/robin-lg.png') }} 1200w"
+<!--<img src="{{ url_for('static', filename='icons/robin-sm.png') }}"-->
+<!--     srcset="{{ url_for('static', filename='icons/robin-md.png') }} 768w,-->
+<!--             {{ url_for('static', filename='icons/robin-lg.png') }} 1200w"-->
+<!--     sizes="(max-width: 767px) 100vw, 50vw"-->
+<!--     alt="robin">-->
+<img src="{{ url_for('static', filename='icons/memphis_bird_tight.png') }}"
+     srcset="{{ url_for('static', filename='icons/memphis_bird_tight') }} 768w,
+             {{ url_for('static', filename='icons/memphis_bird_tight') }} 1200w"
      sizes="(max-width: 767px) 100vw, 50vw"
      alt="robin">
 <h1 style="font-family: 'FlyingBird', sans-serif;">Find Recent Bird Sightings</h1>
