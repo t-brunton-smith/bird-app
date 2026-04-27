@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+    <title>How It Works — Phlock</title>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; }
+
+        :root {
+            --primary:       #5f7a5f;
+            --primary-dark:  #3b5240;
+            --primary-light: #edf2ea;
+            --gold:          #c8881a;
+            --gold-dark:     #a86f10;
+            --gold-light:    #fdf5e6;
+            --brown:         #6b4226;
+            --text:          #2a2018;
+            --muted:         #786e5e;
+            --border:        #cdd5c5;
+            --bg:            #f1f4ee;
+            --surface:       #ffffff;
+            --radius:        10px;
+            --shadow:        0 4px 20px rgba(0,0,0,0.08);
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background: var(--bg);
+            font-family: Arial, sans-serif;
+            color: var(--text);
+        }
+
+        /* ── Hero ── */
+        .hero {
+            background: linear-gradient(150deg, var(--primary-dark) 0%, var(--primary) 100%);
+            padding: 44px 24px 36px;
+            text-align: center;
+            color: white;
+        }
+
+        .hero img {
+            height: 64px;
+            width: auto;
+            filter: drop-shadow(0 4px 12px rgba(0,0,0,0.25));
+        }
+
+        .hero h1 {
+            font-family: 'Playfair Display', serif;
+            font-style: italic;
+            font-size: 2.6rem;
+            font-weight: 700;
+            margin: 10px 0 4px;
+            letter-spacing: 0.01em;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .hero p {
+            font-family: 'AntipastoPro', sans-serif;
+            font-size: 1rem;
+            margin: 0;
+            opacity: 0.88;
+        }
+
+        /* ── Layout ── */
+        .page-container {
+            max-width: 680px;
+            margin: 0 auto;
+            padding: 28px 16px 60px;
+        }
+
+        /* ── Back link ── */
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            font-size: 13px;
+            color: var(--primary);
+            text-decoration: none;
+            font-family: 'AntipastoPro', sans-serif;
+            font-weight: bold;
+        }
+
+        .back-link:hover { color: var(--primary-dark); }
+
+        /* ── Cards ── */
+        .card {
+            background: var(--surface);
+            border-radius: 16px;
+            padding: 28px 24px;
+            box-shadow: var(--shadow);
+            margin-bottom: 20px;
+        }
+
+        .card h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--primary-dark);
+            margin: 0 0 14px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .card p {
+            line-height: 1.7;
+            margin: 0 0 12px;
+            font-size: 15px;
+        }
+
+        .card p:last-child { margin-bottom: 0; }
+
+        /* ── Steps ── */
+        .steps {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .steps li {
+            display: flex;
+            gap: 14px;
+            align-items: flex-start;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 15px;
+            line-height: 1.6;
+        }
+
+        .steps li:last-child { border-bottom: none; }
+
+        .step-num {
+            flex-shrink: 0;
+            width: 28px;
+            height: 28px;
+            background: var(--gold);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 13px;
+            margin-top: 1px;
+        }
+
+        /* ── Sources grid ── */
+        .sources {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 14px;
+            margin-top: 4px;
+        }
+
+        .source-card {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 14px 16px;
+        }
+
+        .source-name {
+            font-family: 'AntipastoPro', sans-serif;
+            font-weight: bold;
+            font-size: 14px;
+            color: var(--primary-dark);
+            margin-bottom: 4px;
+        }
+
+        .source-desc {
+            font-size: 13px;
+            color: var(--muted);
+            line-height: 1.5;
+        }
+
+        /* ── Links ── */
+        a {
+            color: var(--gold-dark);
+            text-decoration: none;
+        }
+
+        a:hover { text-decoration: underline; }
+
+        /* ── CTA ── */
+        .cta {
+            text-align: center;
+            margin-top: 8px;
+        }
+
+        .btn {
+            display: inline-block;
+            background: var(--gold);
+            color: white;
+            border: none;
+            padding: 12px 28px;
+            border-radius: var(--radius);
+            font-size: 16px;
+            font-family: 'AntipastoPro', sans-serif;
+            font-weight: bold;
+            text-decoration: none;
+            cursor: pointer;
+            transition: filter 0.15s;
+        }
+
+        .btn:hover { filter: brightness(1.08); text-decoration: none; }
+    </style>
+</head>
+<body>
+
+<div class="hero">
+    <img src="{{ url_for('static', filename='icons/bird_icon_M.png') }}"
+         srcset="{{ url_for('static', filename='icons/bird_icon_S.png') }} 1x,
+                 {{ url_for('static', filename='icons/bird_icon_M.png') }} 2x"
+         alt="bird icon">
+    <h1>Phlock</h1>
+    <p>How it works</p>
+</div>
+
+<div class="page-container">
+    <a href="/" class="back-link">&#8592; Back to search</a>
+
+    <div class="card">
+        <h2>What is Phlock?</h2>
+        <p>
+            Phlock is a simple tool for exploring recent bird sightings near any location. Enter a city,
+            park, or address and Phlock will show you what species birders have reported there — as a
+            sortable list or an interactive map.
+        </p>
+        <p>
+            All sighting data comes from <a href="https://ebird.org" target="_blank">eBird</a>, the world's
+            largest real-time bird observation database. Birders around the world submit checklists every
+            day, so results are continuously updated with fresh observations.
+        </p>
+    </div>
+
+    <div class="card">
+        <h2>How to use it</h2>
+        <ol class="steps">
+            <li>
+                <span class="step-num">1</span>
+                <span><strong>Enter a location</strong> — type any city, park, address, or landmark, or tap
+                <em>Use my location</em> to search from where you are now.</span>
+            </li>
+            <li>
+                <span class="step-num">2</span>
+                <span><strong>Pick a hotspot (optional)</strong> — after entering a location, Phlock will
+                suggest nearby eBird hotspots. Selecting one narrows results to observations logged
+                at that specific site.</span>
+            </li>
+            <li>
+                <span class="step-num">3</span>
+                <span><strong>Filter by species</strong> — type a species name with autocomplete to see only
+                sightings of that bird. Or toggle <em>Notable sightings only</em> to surface rare or
+                unusual species flagged by eBird reviewers.</span>
+            </li>
+            <li>
+                <span class="step-num">4</span>
+                <span><strong>Set your range</strong> — choose how far out to search (up to 50 km) and how
+                many days back to look (up to 30 days).</span>
+            </li>
+            <li>
+                <span class="step-num">5</span>
+                <span><strong>View results</strong> — <em>List View</em> gives a sortable, filterable table
+                with checklist links. <em>Map View</em> plots each sighting on an interactive map with
+                species and count details.</span>
+            </li>
+        </ol>
+    </div>
+
+    <div class="card">
+        <h2>Data sources</h2>
+        <div class="sources">
+            <div class="source-card">
+                <div class="source-name">eBird</div>
+                <div class="source-desc">
+                    Bird sighting data, hotspot locations, and species taxonomy —
+                    <a href="https://ebird.org" target="_blank">ebird.org</a>
+                </div>
+            </div>
+            <div class="source-card">
+                <div class="source-name">Cornell Lab of Ornithology</div>
+                <div class="source-desc">
+                    eBird is operated by the Cornell Lab.
+                    <a href="https://www.birds.cornell.edu" target="_blank">birds.cornell.edu</a>
+                </div>
+            </div>
+            <div class="source-card">
+                <div class="source-name">Mapbox</div>
+                <div class="source-desc">
+                    Geocoding — turning place names into coordinates so eBird can be queried nearby.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card cta">
+        <p style="color:var(--muted); margin-bottom:16px;">Ready to find some birds?</p>
+        <a href="/" class="btn">Start searching &#8594;</a>
+    </div>
+</div>
+
+</body>
+</html>
