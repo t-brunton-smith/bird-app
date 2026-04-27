@@ -1,47 +1,121 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="UTF-8">
-    <title>Location Not Found</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+    <title>Location Not Found — Phlock</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
+        *, *::before, *::after { box-sizing: border-box; }
+
+        :root {
+            --primary-dark: #3b5240;
+            --primary:      #5f7a5f;
+            --gold:         #c8881a;
+            --text:         #2a2018;
+            --muted:        #786e5e;
+            --bg:           #f1f4ee;
+            --surface:      #ffffff;
+            --border:       #cdd5c5;
+            --shadow:       0 4px 20px rgba(0,0,0,0.08);
+            --radius:       10px;
         }
 
-        .container {
-            max-width: 800px;
+        body {
+            margin: 0;
+            padding: 0;
+            background: var(--bg);
+            font-family: Arial, sans-serif;
+            color: var(--text);
+        }
+
+        .hero {
+            background: linear-gradient(150deg, var(--primary-dark) 0%, var(--primary) 100%);
+            padding: 44px 24px 36px;
+            text-align: center;
+            color: white;
+        }
+
+        .hero img {
+            height: 64px;
+            filter: drop-shadow(0 4px 12px rgba(0,0,0,0.25));
+        }
+
+        .hero h1 {
+            font-family: 'Playfair Display', serif;
+            font-style: italic;
+            font-size: 2.6rem;
+            font-weight: 700;
+            margin: 10px 0 4px;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .page-container {
+            max-width: 480px;
             margin: 0 auto;
-            padding: 20px;
+            padding: 32px 16px 60px;
             text-align: center;
         }
 
-        h1 {
-            font-size: 24px;
-            margin-bottom: 20px;
+        .card {
+            background: var(--surface);
+            border-radius: 16px;
+            padding: 32px 24px;
+            box-shadow: var(--shadow);
         }
 
-        p {
-            font-size: 18px;
-            margin-bottom: 20px;
+        .card h2 {
+            font-size: 1.2rem;
+            margin: 0 0 12px;
+            color: var(--text);
         }
+
+        .card p {
+            font-size: 15px;
+            color: var(--muted);
+            line-height: 1.6;
+            margin: 0 0 24px;
+        }
+
+        .card strong {
+            color: var(--text);
+        }
+
+        .btn {
+            display: inline-block;
+            background: var(--gold);
+            color: white;
+            padding: 11px 24px;
+            border-radius: var(--radius);
+            font-size: 15px;
+            font-family: 'AntipastoPro', sans-serif;
+            font-weight: bold;
+            text-decoration: none;
+            transition: filter 0.15s;
+        }
+
+        .btn:hover { filter: brightness(1.08); }
     </style>
 </head>
 <body>
-<div class="container">
-    <h1>Location Not Found</h1>
-    <p>The specified location "<span id="location"></span>" could not be found. Please try again with a different location.</p>
-    <p><a href="/">Go back to the homepage</a></p>
+
+<div class="hero">
+    <img src="{{ url_for('static', filename='icons/bird_icon_M.png') }}" alt="Phlock">
+    <h1>Phlock</h1>
 </div>
 
-<script>
-    // Get the location and improper location from the query parameters
-    var urlParams = new URLSearchParams(window.location.search);
-    var location = urlParams.get('location');
-
-    // Update the text content of the elements
-    document.getElementById('location').textContent = location || '';
+<div class="page-container">
+    <div class="card">
+        <h2>Location not found</h2>
+        <p>
+            Couldn't find <strong>{{ location }}</strong>.<br>
+            Try a city name, postal code, or well-known landmark.
+        </p>
+        <a href="/" class="btn">&#8592; Try another search</a>
+    </div>
+</div>
 
 </body>
 </html>

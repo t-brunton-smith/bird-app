@@ -1,23 +1,14 @@
 @font-face {
-    font-family: 'FlyingBird';
-    src: url('fonts/flying-bird-font/FlyingBird-Yz9Ga.otf');
-}
-
-@font-face {
     font-family: 'AntipastoPro';
     src: url('fonts/antipasto/AntipastoPro_trial.ttf') format('truetype');
-    /* The @font-face rule is used to specify a custom font to be downloaded and used on the web page */
-    /* The format property specifies the format of the font file */
 }
 
 @font-face {
     font-family: 'AntipastoProLight';
     src: url('fonts/antipasto/AntipastoPro-Light_trial.ttf') format('truetype');
-    /* The @font-face rule is used to specify a custom font to be downloaded and used on the web page */
-    /* The format property specifies the format of the font file */
 }
 
-/* Toggle switch styles */
+/* Toggle switch */
 .switch {
     position: relative;
     display: inline-block;
@@ -25,7 +16,6 @@
     height: 34px;
     margin-bottom: 16px;
     font-family: 'AntipastoProLight';
-
 }
 
 .switch input {
@@ -42,7 +32,6 @@
     right: 0;
     bottom: 0;
     background-color: #ccc;
-    -webkit-transition: .4s;
     transition: .4s;
 }
 
@@ -54,7 +43,6 @@
     left: 4px;
     bottom: 4px;
     background-color: white;
-    -webkit-transition: .4s;
     transition: .4s;
 }
 
@@ -75,7 +63,5 @@ input:focus + .slider {
 }
 
 input:checked + .slider:before {
-    -webkit-transform: translateX(26px);
-    -ms-transform: translateX(26px);
     transform: translateX(26px);
 }
