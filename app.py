@@ -207,8 +207,6 @@ def create_map_with_pins(locations, center_location, map_title):
         folium.Marker(location=[lat, lng], icon=folium.Icon(icon='map-marker'),
                       popup=folium.Popup(popup_html, max_width=220)).add_to(map_obj)
 
-    title_html = f'<h3 align="center" style="font-size:24px"><b>{map_title}</b></h3>'
-    map_obj.get_root().html.add_child(folium.Element(title_html))
     return map_obj
 
 
@@ -260,20 +258,37 @@ def map_endpoint():
 
     btn_style = ('display:inline-block; background:#c8881a; color:white; padding:7px 12px; '
                  'border-radius:6px; text-decoration:none; font-family:Arial,sans-serif; '
-                 'font-size:13px; font-weight:bold;')
-    buttons_html = f'''
+                 'font-size:13px; font-weight:bold; white-space:nowrap; flex-shrink:0;')
+    nav_html = f'''
     <style>
-        @media (max-width:640px) {{
-            #map-nav {{ top:8px !important; right:8px !important; gap:6px !important; }}
-            #map-nav a {{ padding:6px 10px !important; font-size:12px !important; }}
-            #map-summary {{ width:calc(100vw - 16px) !important; left:8px !important; bottom:40px !important; max-height:200px !important; }}
+        #map-header {{
+            position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+            display: flex; align-items: center; gap: 8px; padding: 10px 14px;
+            background: rgba(59,82,64,0.95); backdrop-filter: blur(3px);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }}
+        #map-header-title {{
+            flex: 1; min-width: 0; text-align: center;
+            color: rgba(255,255,255,0.9); font-family: Arial, sans-serif;
+            font-size: 13px; font-weight: bold;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }}
+        .leaflet-top {{ top: 52px !important; }}
+        @media (max-width: 640px) {{
+            #map-header {{ padding: 8px 10px; gap: 6px; }}
+            #map-header a {{ padding: 5px 9px !important; font-size: 12px !important; }}
+            #map-header-title {{ font-size: 11px; }}
+            .leaflet-top {{ top: 46px !important; }}
+            #map-summary {{ width: calc(100vw - 16px) !important; left: 8px !important;
+                bottom: 40px !important; max-height: 200px !important; }}
         }}
     </style>
-    <div id="map-nav" style="position:fixed; top:16px; right:16px; z-index:1000; display:flex; gap:8px;">
+    <div id="map-header">
         <a href="/" style="{btn_style}">&#8592; Search</a>
+        <span id="map-header-title">{map_title}</span>
         <a href="{list_url}" style="{btn_style}">List View</a>
     </div>'''
-    map_obj.get_root().html.add_child(folium.Element(buttons_html))
+    map_obj.get_root().html.add_child(folium.Element(nav_html))
 
     rows = ''.join(
         f'<div style="display:flex; justify-content:space-between; align-items:center; '
