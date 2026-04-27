@@ -8,10 +8,20 @@ import pandas as pd
 
 app = Flask(__name__)
 
+# Load taxonomy once at startup
+_df_tax = pd.read_csv("data/ebird_taxonomy.csv")
+_SPECIES_CODES = pd.Series(
+    _df_tax.SPECIES_CODE.values,
+    index=_df_tax.COMMON_NAME.str.lower()
+).to_dict()
+_SPECIES_NAMES = sorted(_df_tax['COMMON_NAME'].dropna().tolist())
 
-# Redirect all HTTP requests to HTTPS
+
+# Redirect all HTTP requests to HTTPS (disabled when FLASK_ENV=development)
 @app.before_request
 def https_redirect():
+    if request.host.split(':')[0] in ('localhost', '127.0.0.1'):
+        return
     if not request.is_secure:
         url = request.url.replace('http://', 'https://', 1)
         return redirect(url, code=301)
@@ -28,6 +38,11 @@ def location():
     long = request.args.get('long')
     location_name = coordinates_to_location(lat, long)
     return location_name if location_name else "", 200
+
+
+@app.route('/api/species')
+def species_list():
+    return jsonify(_SPECIES_NAMES)
 
 
 @app.route('/results')
@@ -217,18 +232,7 @@ def map_endpoint():
 
 
 def species_name_to_code(species_name):
-    df_tax = pd.read_csv("data/ebird_taxonomy.csv")
-
-    # Lower case the species names
-    df_tax['COMMON_NAME'] = df_tax['COMMON_NAME'].apply(str.lower)
-    species_name = species_name.lower()
-    dict_tax = pd.Series(df_tax.SPECIES_CODE.values, index=df_tax.COMMON_NAME).to_dict()
-
-    print(dict_tax)
-    if species_name in dict_tax.keys():
-        return dict_tax[species_name]
-    else:
-        return None
+    return _SPECIES_CODES.get(species_name.lower()) if species_name else None
 
 
 def get_species_sightings_at_coordinates(coordinates, notable=False, species_code=None):

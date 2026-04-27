@@ -105,7 +105,8 @@
 
     <div class="form-group" style="font-family: 'AntipastoPro', sans-serif;">
         <label for="species_name">Species Name (optional):</label>
-        <input type="text" id="species_name" name="species_name"><br><br>
+        <input type="text" id="species_name" name="species_name" list="species-list" autocomplete="off"><br><br>
+        <datalist id="species-list"></datalist>
     </div>
 
 
@@ -130,6 +131,19 @@
 
 
 <script src="{{ url_for('static', filename='app.js') }}"></script>
+
+<script>
+    fetch('/api/species')
+        .then(function(r) { return r.json(); })
+        .then(function(names) {
+            var dl = document.getElementById('species-list');
+            names.forEach(function(name) {
+                var opt = document.createElement('option');
+                opt.value = name;
+                dl.appendChild(opt);
+            });
+        });
+</script>
 
 <script>
     function submitForm(endpoint) {
