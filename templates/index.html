@@ -2,111 +2,161 @@
 <html>
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
-    <title>Recent Bird Sightings</title>
+    <title>Phlock — Bird Sightings</title>
 
     <style>
         *, *::before, *::after { box-sizing: border-box; }
 
+        :root {
+            --primary:       #5f7a5f;
+            --primary-dark:  #3b5240;
+            --primary-light: #edf2ea;
+            --gold:          #c8881a;
+            --gold-dark:     #a86f10;
+            --gold-light:    #fdf5e6;
+            --brown:         #6b4226;
+            --brown-dark:    #4a2c18;
+            --text:          #2a2018;
+            --muted:         #786e5e;
+            --border:        #cdd5c5;
+            --bg:            #f1f4ee;
+            --surface:       #ffffff;
+            --radius:        10px;
+            --shadow:        0 4px 20px rgba(0,0,0,0.08);
+        }
+
         body {
             margin: 0;
             padding: 0;
-            background: #f4f6f8;
+            background: var(--bg);
             font-size: 16px;
+            color: var(--text);
         }
 
-        .page-container {
-            max-width: 560px;
-            margin: 0 auto;
-            padding: 0 16px 32px;
-        }
-
-        .header-section {
+        /* ── Hero ── */
+        .hero {
+            background: linear-gradient(150deg, var(--primary-dark) 0%, var(--primary) 100%);
+            padding: 44px 24px 36px;
             text-align: center;
-            padding: 28px 0 8px;
+            color: white;
         }
 
-        .header-section img {
+        .hero img {
             height: 72px;
             width: auto;
+            filter: drop-shadow(0 4px 12px rgba(0,0,0,0.25));
         }
 
-        h1 {
-            font-family: 'FlyingBird', sans-serif;
-            font-size: 2rem;
-            margin: 8px 0 0;
-            color: #1a1a2e;
+        .hero h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 3rem;
+            font-style: italic;
+            font-weight: 700;
+            margin: 10px 0 6px;
+            letter-spacing: 0.01em;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.2);
         }
 
-        .subtitle {
+        .hero p {
             font-family: 'AntipastoPro', sans-serif;
-            color: #666;
-            margin: 8px 0 24px;
             font-size: 1rem;
+            margin: 0;
+            opacity: 0.88;
+        }
+
+        .hero-links {
+            margin-top: 14px;
+            font-size: 13px;
+            opacity: 0.75;
+        }
+
+        .hero-links a {
+            color: white;
+            text-decoration: none;
+            border-bottom: 1px solid rgba(255,255,255,0.45);
+            transition: opacity 0.15s;
+        }
+
+        .hero-links a:hover { opacity: 1; }
+
+        /* ── Form card ── */
+        .page-container {
+            max-width: 540px;
+            margin: 0 auto;
+            padding: 24px 16px 48px;
         }
 
         .card {
-            background: white;
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            background: var(--surface);
+            border-radius: 16px;
+            padding: 24px 20px;
+            box-shadow: var(--shadow);
         }
 
-        .form-group {
-            margin: 0 0 18px;
-        }
+        /* ── Form elements ── */
+        .form-group { margin: 0 0 20px; }
 
         label {
             display: block;
             margin-bottom: 6px;
             font-family: 'AntipastoPro', sans-serif;
-            color: #333;
-            font-size: 0.95rem;
+            color: var(--muted);
+            font-size: 0.8rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
 
         input[type="text"], select {
             width: 100%;
             height: 48px;
-            padding: 8px 12px;
+            padding: 0 14px;
             font-size: 16px;
-            border: 1.5px solid #ddd;
-            border-radius: 8px;
-            background: white;
-            transition: border-color 0.2s;
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius);
+            background: var(--surface);
+            color: var(--text);
+            transition: border-color 0.15s, box-shadow 0.15s;
+            appearance: auto;
         }
 
         input[type="text"]:focus, select:focus {
             outline: none;
-            border-color: #007bff;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(95,122,95,0.15);
         }
 
         input[type="text"]:disabled {
-            background: #f5f5f5;
+            background: #f5f7f3;
             color: #aaa;
         }
 
         input[type="range"] {
             width: 100%;
-            margin-top: 8px;
-            accent-color: #007bff;
+            margin-top: 10px;
+            accent-color: var(--gold);
+            height: 4px;
         }
 
         .slider-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 2px;
         }
 
         .slider-value {
-            background: #007bff;
-            color: #fff;
+            background: var(--gold);
+            color: white;
             font-family: Arial, sans-serif;
-            font-size: 13px;
+            font-size: 12px;
             font-weight: bold;
-            padding: 2px 10px;
-            border-radius: 12px;
-            min-width: 52px;
+            padding: 3px 11px;
+            border-radius: 20px;
+            min-width: 56px;
             text-align: center;
         }
 
@@ -114,79 +164,98 @@
             display: flex;
             align-items: center;
             gap: 12px;
+            padding: 4px 0;
         }
 
         .notable-label {
-            color: #444;
+            color: var(--text);
             font-family: 'AntipastoPro', sans-serif;
+            font-size: 0.95rem;
         }
 
         .hotspot-hint {
             font-size: 12px;
-            color: #888;
+            color: var(--muted);
             margin-top: 5px;
             font-family: Arial, sans-serif;
         }
 
-        .divider {
-            border: none;
-            border-top: 1px solid #eee;
-            margin: 20px 0;
-        }
-
-        .btn-row {
-            display: flex;
-            gap: 10px;
-            margin-top: 20px;
-        }
-
-        .btn {
-            flex: 1;
-            height: 48px;
-            font-size: 16px;
-            font-family: 'AntipastoPro', sans-serif;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
+        .section-label {
+            font-size: 11px;
             font-weight: bold;
-            transition: background 0.15s;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--muted);
+            margin: 24px 0 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
-        .btn-primary {
-            background: #007bff;
-            color: white;
+        .section-label::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border);
         }
 
-        .btn-primary:hover { background: #0056b3; }
-
-        .btn-secondary {
-            background: #6c757d;
-            color: white;
-        }
-
-        .btn-secondary:hover { background: #545b62; }
-
+        /* ── Buttons ── */
         .btn-location {
             width: 100%;
             height: 44px;
             font-size: 15px;
             font-family: 'AntipastoPro', sans-serif;
-            border: 1.5px solid #007bff;
-            border-radius: 8px;
-            background: white;
-            color: #007bff;
+            border: 1.5px solid var(--primary);
+            border-radius: var(--radius);
+            background: var(--primary-light);
+            color: var(--primary-dark);
             cursor: pointer;
-            margin-bottom: 4px;
+            margin-bottom: 12px;
+            font-weight: bold;
+            transition: background 0.15s;
         }
 
-        .btn-location:hover { background: #f0f7ff; }
+        .btn-location:hover { background: #dce8d8; }
 
+        .btn-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            flex: 1;
+            height: 50px;
+            font-size: 16px;
+            font-family: 'AntipastoPro', sans-serif;
+            border: none;
+            border-radius: var(--radius);
+            cursor: pointer;
+            font-weight: bold;
+            transition: filter 0.15s, transform 0.1s;
+        }
+
+        .btn:active { transform: scale(0.98); }
+
+        .btn-primary {
+            background: var(--gold);
+            color: white;
+        }
+
+        .btn-primary:hover { filter: brightness(1.08); }
+
+        .btn-secondary {
+            background: var(--brown);
+            color: white;
+        }
+
+        .btn-secondary:hover { filter: brightness(1.15); }
+
+        /* ── Loading overlay ── */
         #loading-overlay {
             display: none;
             position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: rgba(255,255,255,0.9);
+            inset: 0;
+            background: rgba(255,255,255,0.92);
             z-index: 999;
             align-items: center;
             justify-content: center;
@@ -194,12 +263,19 @@
         }
 
         .spinner {
-            width: 52px;
-            height: 52px;
-            border: 5px solid #ddd;
-            border-top-color: #007bff;
+            width: 48px;
+            height: 48px;
+            border: 4px solid var(--border);
+            border-top-color: var(--gold);
             border-radius: 50%;
-            animation: spin 0.8s linear infinite;
+            animation: spin 0.75s linear infinite;
+        }
+
+        .loading-text {
+            margin-top: 16px;
+            font-family: 'AntipastoPro', sans-serif;
+            font-size: 18px;
+            color: var(--muted);
         }
 
         @keyframes spin { to { transform: rotate(360deg); } }
@@ -209,25 +285,27 @@
 
 <div id="loading-overlay">
     <div class="spinner"></div>
-    <p style="font-family:'AntipastoPro',sans-serif; margin-top:20px; font-size:18px; color:#333;">Searching...</p>
+    <p class="loading-text">Searching…</p>
+</div>
+
+<div class="hero">
+    <img src="{{ url_for('static', filename='icons/bird_icon_M.png') }}"
+         srcset="{{ url_for('static', filename='icons/bird_icon_S.png') }} 1x,
+                 {{ url_for('static', filename='icons/bird_icon_M.png') }} 2x"
+         alt="bird icon">
+    <h1>Phlock</h1>
+    <p>Find recent bird sightings near you</p>
+    <div class="hero-links"><a href="/how-it-works">How it works</a></div>
 </div>
 
 <div class="page-container">
-    <div class="header-section">
-        <img src="{{ url_for('static', filename='icons/bird_icon_M.png') }}"
-             srcset="{{ url_for('static', filename='icons/bird_icon_S.png') }} 1x,
-                     {{ url_for('static', filename='icons/bird_icon_M.png') }} 2x"
-             alt="bird icon">
-        <h1>Phlock</h1>
-        <p class="subtitle">Find recent bird sightings near you</p>
-    </div>
-
     <div class="card">
         <form id="dataForm" method="get">
 
             <div class="form-group">
                 <label for="location">Location</label>
-                <input type="text" id="location" name="location" placeholder="City, park, address…" required>
+                <input type="text" id="location" name="location"
+                       placeholder="City, park, address…" required>
             </div>
 
             <div class="form-group" id="hotspot-group" style="display:none;">
@@ -241,8 +319,9 @@
 
             <div class="form-group">
                 <label for="species_name">Species (optional)</label>
-                <input type="text" id="species_name" name="species_name" list="species-list"
-                       autocomplete="off" placeholder="e.g. American Robin">
+                <input type="text" id="species_name" name="species_name"
+                       list="species-list" autocomplete="off"
+                       placeholder="e.g. American Robin">
                 <datalist id="species-list"></datalist>
             </div>
 
@@ -256,7 +335,7 @@
                 </div>
             </div>
 
-            <hr class="divider">
+            <div class="section-label">Range</div>
 
             <div class="form-group">
                 <label for="dist">
@@ -280,15 +359,15 @@
                        oninput="document.getElementById('back-value').textContent = this.value">
             </div>
 
-            <hr class="divider">
-
             <button type="button" class="btn-location" id="use-location-button">
-                &#x1F4CD; Use my location
+                📍 Use my location
             </button>
 
             <div class="btn-row">
-                <button type="submit" class="btn btn-primary" onclick="submitForm('/results')">List View</button>
-                <button type="submit" class="btn btn-secondary" onclick="submitForm('/map')">Map View</button>
+                <button type="submit" class="btn btn-primary"
+                        onclick="submitForm('/results')">List View</button>
+                <button type="submit" class="btn btn-secondary"
+                        onclick="submitForm('/map')">Map View</button>
             </div>
 
         </form>
@@ -311,13 +390,13 @@
 </script>
 
 <script>
-    var speciesInput = document.getElementById('species_name');
+    var speciesInput  = document.getElementById('species_name');
     var notableToggle = document.getElementById('notable');
 
     speciesInput.addEventListener('input', function() {
-        var hasSpecies = this.value.trim().length > 0;
-        notableToggle.disabled = hasSpecies;
-        if (hasSpecies) notableToggle.checked = false;
+        var has = this.value.trim().length > 0;
+        notableToggle.disabled = has;
+        if (has) notableToggle.checked = false;
     });
 
     notableToggle.addEventListener('change', function() {
@@ -326,26 +405,26 @@
     });
 
     function loadHotspots() {
-        var loc = document.getElementById('location').value.trim();
+        var loc  = document.getElementById('location').value.trim();
         if (!loc) return;
         var dist = document.getElementById('dist').value;
         var hint = document.getElementById('hotspot-hint');
-        var group = document.getElementById('hotspot-group');
-        var select = document.getElementById('hotspot-select');
+        var grp  = document.getElementById('hotspot-group');
+        var sel  = document.getElementById('hotspot-select');
         hint.textContent = 'Finding hotspots…';
-        group.style.display = 'block';
+        grp.style.display = 'block';
         fetch('/api/hotspots?location=' + encodeURIComponent(loc) + '&dist=' + dist)
             .then(function(r) { return r.json(); })
-            .then(function(hotspots) {
-                select.innerHTML = '<option value="">All locations in area</option>';
-                hotspots.forEach(function(h) {
-                    var opt = document.createElement('option');
-                    opt.value = h.locId;
-                    opt.dataset.name = h.locName;
-                    opt.textContent = h.locName + (h.numSpecies ? ' (' + h.numSpecies + ' species)' : '');
-                    select.appendChild(opt);
+            .then(function(hs) {
+                sel.innerHTML = '<option value="">All locations in area</option>';
+                hs.forEach(function(h) {
+                    var o = document.createElement('option');
+                    o.value = h.locId;
+                    o.dataset.name = h.locName;
+                    o.textContent = h.locName + (h.numSpecies ? ' (' + h.numSpecies + ' species)' : '');
+                    sel.appendChild(o);
                 });
-                hint.textContent = hotspots.length + ' hotspot' + (hotspots.length !== 1 ? 's' : '') + ' found';
+                hint.textContent = hs.length + ' hotspot' + (hs.length !== 1 ? 's' : '') + ' found';
             })
             .catch(function() { hint.textContent = ''; });
     }
@@ -353,12 +432,12 @@
     document.getElementById('location').addEventListener('blur', loadHotspots);
 
     document.getElementById('hotspot-select').addEventListener('change', function() {
-        var opt = this.options[this.selectedIndex];
-        document.getElementById('loc_name').value = opt.dataset.name || '';
+        var o = this.options[this.selectedIndex];
+        document.getElementById('loc_name').value = o.dataset.name || '';
     });
 
     function submitForm(endpoint) {
-        if (document.getElementById('location').value === '') {
+        if (!document.getElementById('location').value) {
             alert('Please enter a location.');
             return;
         }

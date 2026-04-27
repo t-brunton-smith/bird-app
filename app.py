@@ -49,6 +49,11 @@ def index():
     return render_template('index.html')
 
 
+@app.route('/how-it-works')
+def how_it_works():
+    return render_template('how_it_works.html')
+
+
 @app.route("/location")
 def location():
     lat = request.args.get('lat')
@@ -253,18 +258,18 @@ def map_endpoint():
 
     map_obj = create_map_with_pins(sighting_coordinates, center_coordinates, map_title)
 
-    btn_style = ('display:inline-block; background:#007bff; color:white; padding:7px 12px; '
+    btn_style = ('display:inline-block; background:#c8881a; color:white; padding:7px 12px; '
                  'border-radius:6px; text-decoration:none; font-family:Arial,sans-serif; '
                  'font-size:13px; font-weight:bold;')
     buttons_html = f'''
     <style>
         @media (max-width:640px) {{
-            #map-nav {{ top:8px !important; left:8px !important; gap:6px !important; }}
+            #map-nav {{ top:8px !important; right:8px !important; gap:6px !important; }}
             #map-nav a {{ padding:6px 10px !important; font-size:12px !important; }}
             #map-summary {{ width:calc(100vw - 16px) !important; left:8px !important; bottom:40px !important; max-height:200px !important; }}
         }}
     </style>
-    <div id="map-nav" style="position:fixed; top:16px; left:16px; z-index:1000; display:flex; gap:8px;">
+    <div id="map-nav" style="position:fixed; top:16px; right:16px; z-index:1000; display:flex; gap:8px;">
         <a href="/" style="{btn_style}">&#8592; Search</a>
         <a href="{list_url}" style="{btn_style}">List View</a>
     </div>'''
@@ -274,7 +279,7 @@ def map_endpoint():
         f'<div style="display:flex; justify-content:space-between; align-items:center; '
         f'padding:4px 0; border-bottom:1px solid #eee;">'
         f'<span style="font-size:13px; font-family:Arial,sans-serif;">{name}</span>'
-        f'<span style="background:#007bff; color:white; border-radius:10px; padding:1px 8px; '
+        f'<span style="background:#c8881a; color:white; border-radius:10px; padding:1px 8px; '
         f'font-size:12px; font-weight:bold; margin-left:8px; white-space:nowrap;">{count}</span>'
         f'</div>'
         for name, count in species_summary
@@ -283,7 +288,7 @@ def map_endpoint():
     <div id="map-summary" style="position:fixed; bottom:30px; left:16px; z-index:1000; background:white;
          border-radius:8px; box-shadow:0 2px 10px rgba(0,0,0,0.25); width:260px; max-height:280px;
          display:flex; flex-direction:column; overflow:hidden;">
-        <div style="padding:8px 12px; background:#3b5998; color:white;
+        <div style="padding:8px 12px; background:#3b5240; color:white;
              font-family:Arial,sans-serif; font-size:13px; font-weight:bold; flex-shrink:0;">
             {len(species_summary)} species &mdash; {len(sighting_coordinates)} sightings
         </div>
