@@ -50,7 +50,11 @@ Open `http://localhost:5000` in your browser.
 
 ```bash
 docker build -t tbruntonsmith/bird-app-test .
-docker run -p 80:5000 tbruntonsmith/bird-app-test
+docker run -p 80:5000 \
+  -e EBIRD_TOKEN=your_token \
+  -e MAPBOX_TOKEN=your_token \
+  -e STADIA_TOKEN=your_token \
+  tbruntonsmith/bird-app-test
 ```
 
 Open `http://localhost` in your browser.
@@ -68,6 +72,9 @@ Run on the server with SSL certificates (e.g. from Let's Encrypt):
 
 ```bash
 docker run --restart unless-stopped -p 443:5000 \
+  -e EBIRD_TOKEN=your_token \
+  -e MAPBOX_TOKEN=your_token \
+  -e STADIA_TOKEN=your_token \
   -v /etc/letsencrypt/live/phlock.org/privkey.pem:/app/ssl/privkey2.pem \
   -v /etc/letsencrypt/live/phlock.org/cert.pem:/app/ssl/cert2.pem \
   -d tbruntonsmith/bird-app
@@ -96,7 +103,7 @@ The app detects SSL certificates at `/app/ssl` at startup and serves HTTPS autom
 | Endpoint | Description |
 |----------|-------------|
 | `GET /` | Main search page |
-| `GET /results?location=&species_name=&notable=` | Sightings list |
-| `GET /map?center_location=&species_name=&notable=` | Interactive map |
+| `GET /results?location=&species_name=&notable=&dist=&back=` | Sightings list |
+| `GET /map?location=&species_name=&notable=&dist=&back=` | Interactive map |
 | `GET /api/species` | JSON list of all species names (for autocomplete) |
 | `GET /location?lat=&long=` | Reverse geocode coordinates to a place name |

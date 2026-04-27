@@ -12,7 +12,10 @@
         .header {
             background-color: #3b5998;
             color: #fff;
-            padding: 10px;
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
 
         .header h1 {
@@ -22,8 +25,39 @@
 
         .header img {
             height: 60px;
-            margin-right: 20px;
             vertical-align: middle;
+        }
+
+        .toolbar {
+            padding: 10px 16px;
+            background: #f8f8f8;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .back-btn {
+            display: inline-block;
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 7px 14px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+
+        .back-btn:hover {
+            background: #0056b3;
+        }
+
+        .search-context {
+            color: #555;
+            font-size: 14px;
         }
 
         .sightings-table {
@@ -44,6 +78,18 @@
         .sightings-table tr:nth-child(even) {
             background-color: #f2f2f2;
         }
+
+        .checklist-link {
+            color: #007bff;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        .empty-state {
+            padding: 32px 16px;
+            text-align: center;
+            color: #555;
+        }
     </style>
 </head>
 <body>
@@ -51,23 +97,45 @@
     <img src="{{ url_for('static', filename='icons/bird_icon_XS.png') }}" alt="bird logo">
     <h1>Recent Bird Sightings</h1>
 </div>
+
+<div class="toolbar">
+    <a href="/" class="back-btn">&#8592; New Search</a>
+    <span class="search-context">
+        <strong>{{ sightings|length }}</strong> sighting{{ 's' if sightings|length != 1 else '' }}
+        near <strong>{{ location }}</strong>
+        {% if species_name %} &mdash; <strong>{{ species_name }}</strong>{% endif %}
+        {% if notable %} &mdash; notable only{% endif %}
+        &mdash; within <strong>{{ dist }} km</strong>
+        &mdash; last <strong>{{ back }} day{{ 's' if back != 1 else '' }}</strong>
+    </span>
+</div>
+
 {% if sightings %}
 <table class="sightings-table">
     <tr>
-        <th>Species Name</th>
+        <th>Species</th>
         <th>Date</th>
-        <th>Location Name</th>
+        <th>Location</th>
+        <th>Checklist</th>
     </tr>
     {% for sighting in sightings %}
     <tr>
         <td>{{ sighting[0] }}</td>
         <td>{{ sighting[1] }}</td>
         <td>{{ sighting[2] }}</td>
+        <td>
+            {% if sighting[3] %}
+            <a class="checklist-link" href="https://ebird.org/checklist/{{ sighting[3] }}" target="_blank">View ↗</a>
+            {% endif %}
+        </td>
     </tr>
     {% endfor %}
 </table>
 {% else %}
-<p>No recent sightings in this area</p>
+<div class="empty-state">
+    <p>No sightings found for this search.</p>
+    <a href="/" class="back-btn">&#8592; Try another search</a>
+</div>
 {% endif %}
 </body>
 </html>

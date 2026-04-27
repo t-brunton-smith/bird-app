@@ -3,11 +3,7 @@
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
-    <script src="{{ url_for('static', filename='js/index.js') }}"></script>
-
-    <title>
-        Recent Bird Sightings
-    </title>
+    <title>Recent Bird Sightings</title>
 
     <style>
         body {
@@ -39,7 +35,40 @@
             border-radius: 4px;
         }
 
-        button[type="submit"], button[type="button"] {
+        input[type="text"]:disabled {
+            background: #f0f0f0;
+            color: #aaa;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            margin-top: 8px;
+        }
+
+        .slider-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+
+        .slider-header span:first-child {
+            color: #333;
+        }
+
+        .slider-value {
+            background: #007bff;
+            color: #fff;
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            font-weight: bold;
+            padding: 2px 10px;
+            border-radius: 12px;
+            min-width: 48px;
+            text-align: center;
+        }
+
+        button[type="submit"] {
             box-sizing: border-box;
             width: 100%;
             height: 48px;
@@ -52,70 +81,125 @@
             cursor: pointer;
         }
 
-        button[type="button"], button[type="button"] {
+        button[type="button"] {
             box-sizing: border-box;
             width: 100%;
             height: 48px;
             padding: 8px;
             font-size: 16px;
             border: none;
-            background-color: gray; /* Updated background-color */
+            background-color: gray;
             color: #fff;
             border-radius: 4px;
             cursor: pointer;
-            margin: 0 5px;
-
         }
 
         .button-container {
             display: flex;
             justify-content: center;
-            margin-top: 20px; /* Add margin-top to create space */
-
+            margin-top: 20px;
         }
 
         .button-container button {
             margin: 0 5px;
         }
+
+        .toggle-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .notable-label {
+            color: #555;
+        }
+
+        #loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(255, 255, 255, 0.88);
+            z-index: 999;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+
+        .spinner {
+            width: 52px;
+            height: 52px;
+            border: 5px solid #ccc;
+            border-top-color: #007bff;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
-<!--<img src="{{ url_for('static', filename='icons/robin-sm.png') }}"-->
-<!--     srcset="{{ url_for('static', filename='icons/robin-md.png') }} 768w,-->
-<!--             {{ url_for('static', filename='icons/robin-lg.png') }} 1200w"-->
-<!--     sizes="(max-width: 767px) 100vw, 50vw"-->
-<!--     alt="robin">-->
+
+<div id="loading-overlay">
+    <div class="spinner"></div>
+    <p style="font-family:'AntipastoPro',sans-serif; margin-top:20px; font-size:18px;">Searching...</p>
+</div>
+
 <img src="{{ url_for('static', filename='icons/bird_icon_S.png') }}"
      srcset="{{ url_for('static', filename='icons/bird_icon_S.png') }} 768w,
-             {{ url_for('static', filename='icons/bird_icon_S.png') }} 1200w"
+             {{ url_for('static', filename='icons/bird_icon_M.png') }} 1200w"
      sizes="(max-width: 767px) 100vw, 50vw"
-     alt="robin">
+     alt="bird icon">
 <h1 style="font-family: 'FlyingBird', sans-serif;">Find Recent Bird Sightings</h1>
 
 <form id="dataForm" method="get">
     <div class="jumbotron text-center">
-        <p class="lead" style="font-family: 'AntipastoPro', sans-serif;"> Enter a location to find recent bird sightings
-            in that area.</p>
+        <p class="lead" style="font-family: 'AntipastoPro', sans-serif;">Enter a location to find recent bird sightings in that area.</p>
     </div>
 
     <div class="form-group" style="font-family: 'AntipastoPro', sans-serif;">
         <label for="location">Location:</label>
-        <input type="text" id="location" name="location" required><br><br>
+        <input type="text" id="location" name="location" required>
     </div>
 
     <div class="form-group" style="font-family: 'AntipastoPro', sans-serif;">
         <label for="species_name">Species Name (optional):</label>
-        <input type="text" id="species_name" name="species_name" list="species-list" autocomplete="off"><br><br>
+        <input type="text" id="species_name" name="species_name" list="species-list" autocomplete="off">
         <datalist id="species-list"></datalist>
     </div>
 
+    <div class="form-group" style="font-family: 'AntipastoPro', sans-serif;">
+        <div class="toggle-row">
+            <label class="switch" style="margin:0;">
+                <input type="checkbox" name="notable" id="notable">
+                <span class="slider"></span>
+            </label>
+            <span class="notable-label">Notable sightings only</span>
+        </div>
+    </div>
 
     <div class="form-group" style="font-family: 'AntipastoPro', sans-serif;">
-        <label class="switch">
-            <input type="checkbox" name="notable" id="notable">
-            <span class="slider"></span>
+        <label for="dist">
+            <div class="slider-header">
+                <span>Search radius</span>
+                <span class="slider-value"><span id="dist-value">25</span> km</span>
+            </div>
         </label>
-        <span>Notable sightings</span>
+        <input type="range" id="dist" name="dist" min="5" max="50" value="25"
+               oninput="document.getElementById('dist-value').textContent = this.value">
+    </div>
+
+    <div class="form-group" style="font-family: 'AntipastoPro', sans-serif;">
+        <label for="back">
+            <div class="slider-header">
+                <span>Days back</span>
+                <span class="slider-value"><span id="back-value">14</span> days</span>
+            </div>
+        </label>
+        <input type="range" id="back" name="back" min="1" max="30" value="14"
+               oninput="document.getElementById('back-value').textContent = this.value">
     </div>
 
     <button type="button" class="btn btn-primary" id="use-location-button"
@@ -126,9 +210,7 @@
         <button type="submit" onclick="submitForm('/results')">List View</button>
         <button type="submit" onclick="submitForm('/map')">Map View</button>
     </div>
-
 </form>
-
 
 <script src="{{ url_for('static', filename='app.js') }}"></script>
 
@@ -146,49 +228,30 @@
 </script>
 
 <script>
-    function submitForm(endpoint) {
-        var locationInput = document.getElementById('location');
-        var speciesName = document.getElementById('species_name').value;
-        var notableToggle = document.getElementById('notable');
+    var speciesInput = document.getElementById('species_name');
+    var notableToggle = document.getElementById('notable');
 
-        if (locationInput.value === '') {
+    speciesInput.addEventListener('input', function() {
+        var hasSpecies = this.value.trim().length > 0;
+        notableToggle.disabled = hasSpecies;
+        if (hasSpecies) notableToggle.checked = false;
+    });
+
+    notableToggle.addEventListener('change', function() {
+        speciesInput.disabled = this.checked;
+        if (this.checked) speciesInput.value = '';
+    });
+
+    function submitForm(endpoint) {
+        if (document.getElementById('location').value === '') {
             alert('Please enter a location.');
             return;
         }
-        if (speciesName && notableToggle.checked) {
-            alert('Please either clear the Species Name field or disable the Notable toggle.');
-            document.getElementById('species_name').value = ''; // Clear the Species Name box
-            notableToggle.checked = false; // Uncheck the toggle
-            return;
-        }
-
+        document.getElementById('loading-overlay').style.display = 'flex';
         var form = document.getElementById('dataForm');
         form.action = endpoint;
         form.submit();
     }
-
-    // Event listener for Species Name input
-    document.getElementById('species_name').addEventListener('input', function () {
-        var speciesName = this.value;
-        var notableToggle = document.getElementById('notable');
-
-        if (speciesName && notableToggle.checked) {
-            alert('Please either clear the Species Name field or disable the Notable toggle.');
-            this.value = ''; // Clear the Species Name box
-            // notableToggle.checked = false; // Uncheck the toggle
-        }
-    });
-
-    // Event listener for Notable toggle
-    document.getElementById('notable').addEventListener('change', function () {
-        var speciesName = document.getElementById('species_name').value;
-
-        if (this.checked && speciesName) {
-            alert('Please either clear the Species Name field or disable the Notable toggle.');
-            document.getElementById('species_name').value = ''; // Clear the Species Name box
-            this.checked = false; // Uncheck the toggle
-        }
-    });
 </script>
 </body>
 </html>
