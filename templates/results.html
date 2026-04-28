@@ -339,7 +339,7 @@
     <div class="species-chips">
         {% for name, count in species_summary %}
         <div class="species-chip">
-            <span class="chip-count">{{ count }}</span>
+            <span class="chip-count">{{ count if count is not none else '—' }}</span>
             <span>{{ name }}</span>
         </div>
         {% endfor %}
@@ -366,9 +366,9 @@
     {% for sighting in sightings %}
     <tr>
         <td>{{ sighting[0] }}</td>
-        <td>{{ sighting[1] }}</td>
+        <td data-sort="{{ sighting[5] }}">{{ sighting[1] }}</td>
         <td>{{ sighting[2] }}</td>
-        <td class="count-cell">{{ sighting[4] }}</td>
+        <td class="count-cell">{{ sighting[4] if sighting[4] is not none else '—' }}</td>
         <td>
             {% if sighting[3] %}
             <a class="checklist-link" href="https://ebird.org/checklist/{{ sighting[3] }}" target="_blank">View ↗</a>
@@ -453,8 +453,8 @@
         tbody.dataset.sortDir = dir;
 
         rows.sort(function(a, b) {
-            var aVal = a.cells[col] ? a.cells[col].textContent.trim() : '';
-            var bVal = b.cells[col] ? b.cells[col].textContent.trim() : '';
+            var aVal = a.cells[col] ? (a.cells[col].dataset.sort || a.cells[col].textContent.trim()) : '';
+            var bVal = b.cells[col] ? (b.cells[col].dataset.sort || b.cells[col].textContent.trim()) : '';
             if (col === 3) {
                 return dir === 'asc' ? (parseInt(aVal) || 0) - (parseInt(bVal) || 0)
                                      : (parseInt(bVal) || 0) - (parseInt(aVal) || 0);

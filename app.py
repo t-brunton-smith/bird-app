@@ -1,5 +1,6 @@
 import configparser
 import os
+from datetime import datetime
 from urllib.parse import urlencode
 
 import folium as folium
@@ -8,6 +9,16 @@ from flask import Flask, render_template, render_template_string, request, jsoni
 import pandas as pd
 
 app = Flask(__name__)
+
+
+def format_obs_date(obs_dt):
+    if not obs_dt:
+        return ''
+    try:
+        dt = datetime.strptime(obs_dt[:10], '%Y-%m-%d')
+        return f"{dt.strftime('%b')} {dt.day}, {dt.year}"
+    except ValueError:
+        return obs_dt
 
 # Load taxonomy once at startup
 _df_tax = pd.read_csv("data/ebird_taxonomy.csv")
@@ -155,18 +166,23 @@ def results_from_coordinates(lat, lng, notable=False, species_code=None, dist=25
 
     sightings = []
     for sighting in response.json():
+        raw_dt = sighting.get('obsDt', '')
         sightings.append((
             sighting['comName'],
-            sighting['obsDt'],
+            format_obs_date(raw_dt),
             sighting['locName'],
             sighting.get('subId', ''),
-            sighting.get('howMany') or 1,
+            sighting.get('howMany'),
+            raw_dt,
         ))
 
     totals = {}
     for s in sightings:
-        totals[s[0]] = totals.get(s[0], 0) + s[4]
-    species_summary = sorted(totals.items(), key=lambda x: x[1], reverse=True)
+        if s[4] is not None:
+            totals[s[0]] = totals.get(s[0], 0) + s[4]
+        elif s[0] not in totals:
+            totals[s[0]] = None
+    species_summary = sorted(totals.items(), key=lambda x: (x[1] is None, -(x[1] or 0)))
 
     params = {'location': location, 'dist': dist, 'back': back}
     if species_name:
@@ -262,8 +278,11 @@ def map_endpoint():
 
     totals = {}
     for s in sighting_coordinates:
-        totals[s[2]] = totals.get(s[2], 0) + (s[4] or 1)
-    species_summary = sorted(totals.items(), key=lambda x: x[1], reverse=True)
+        if s[4] is not None:
+            totals[s[2]] = totals.get(s[2], 0) + s[4]
+        elif s[2] not in totals:
+            totals[s[2]] = None
+    species_summary = sorted(totals.items(), key=lambda x: (x[1] is None, -(x[1] or 0)))
 
     map_obj = create_map_with_pins(sighting_coordinates, center_coordinates)
 
@@ -345,7 +364,7 @@ def map_endpoint():
         f'padding:5px 4px;border-bottom:1px solid #eee;cursor:pointer;border-radius:4px;transition:background 0.12s;">'
         f'<span style="font-size:13px;font-family:Arial,sans-serif;">{name}</span>'
         f'<span style="background:#c8881a;color:white;border-radius:10px;padding:1px 8px;'
-        f'font-size:12px;font-weight:bold;margin-left:8px;white-space:nowrap;">{count}</span>'
+        f'font-size:12px;font-weight:bold;margin-left:8px;white-space:nowrap;">{"—" if count is None else count}</span>'
         f'</div>'
         for name, count in species_summary
     )
@@ -396,7 +415,7 @@ def get_species_sightings_at_coordinates(coordinates, notable=False, species_cod
         comName = this.get('comName')
         if not all((lat, lng, comName)):
             continue
-        sighting_locations.append((lat, lng, comName, this.get('obsDt'), this.get('howMany'), this.get('subId', '')))
+        sighting_locations.append((lat, lng, comName, format_obs_date(this.get('obsDt', '')), this.get('howMany'), this.get('subId', '')))
 
     return sighting_locations
 
