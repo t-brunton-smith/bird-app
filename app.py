@@ -178,13 +178,15 @@ def results_from_coordinates(lat, lng, notable=False, species_code=None, dist=25
     if loc_name:
         params['loc_name'] = loc_name
     map_url = '/map?' + urlencode(params)
+    search_url = '/?' + urlencode(params)
 
     return render_template('results.html', sightings=sightings, location=location,
                            species_name=species_name, notable=notable, dist=dist, back=back,
-                           map_url=map_url, species_summary=species_summary, loc_name=loc_name)
+                           map_url=map_url, search_url=search_url,
+                           species_summary=species_summary, loc_name=loc_name)
 
 
-def create_map_with_pins(locations, center_location, map_title):
+def create_map_with_pins(locations, center_location):
     map_obj = folium.Map(location=[center_location[0], center_location[1]], zoom_start=10, control_scale=True)
 
     tile_url = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
@@ -194,17 +196,25 @@ def create_map_with_pins(locations, center_location, map_title):
 
     folium.Marker(location=[center_location[0], center_location[1]],
                   icon=folium.Icon(icon='map-marker', color='red')).add_to(map_obj)
-    for this_location in locations:
-        (lat, lng, comName, obsDt, howMany, subId) = this_location
+    for (lat, lng, comName, obsDt, howMany, subId) in locations:
         checklist = (f'<a href="https://ebird.org/checklist/{subId}" target="_blank" '
-                     f'style="color:#007bff;">View checklist ↗</a>') if subId else ''
+                     f'style="color:#c8881a;">View checklist ↗</a>') if subId else ''
         popup_html = (f'<div style="font-family:Arial,sans-serif;font-size:13px;min-width:160px;">'
                       f'<strong style="font-size:14px;display:block;margin-bottom:4px;">{comName}</strong>'
                       f'<span style="color:#666;">{obsDt}</span>'
                       f'{f"<br>Count: {howMany}" if howMany else ""}'
                       f'{"<br>" + checklist if checklist else ""}'
                       f'</div>')
-        folium.Marker(location=[lat, lng], icon=folium.Icon(icon='map-marker'),
+        icon_html = (
+            f'<div data-species="{comName}" style="line-height:0;">'
+            f'<svg xmlns="http://www.w3.org/2000/svg" width="18" height="26" viewBox="0 0 18 26">'
+            f'<path d="M9 0C4.03 0 0 4.03 0 9c0 5.63 9 17 9 17S18 14.63 18 9c0-4.97-4.03-9-9-9z" fill="#c8881a"/>'
+            f'<circle cx="9" cy="9" r="3.5" fill="white" opacity="0.9"/>'
+            f'</svg></div>'
+        )
+        folium.Marker(location=[lat, lng],
+                      icon=folium.DivIcon(html=icon_html, icon_size=(18, 26),
+                                          icon_anchor=(9, 26), popup_anchor=(0, -26)),
                       popup=folium.Popup(popup_html, max_width=220)).add_to(map_obj)
 
     return map_obj
@@ -248,13 +258,14 @@ def map_endpoint():
     if loc_name:
         params['loc_name'] = loc_name
     list_url = '/results?' + urlencode(params)
+    search_url = '/?' + urlencode(params)
 
     totals = {}
     for s in sighting_coordinates:
         totals[s[2]] = totals.get(s[2], 0) + (s[4] or 1)
     species_summary = sorted(totals.items(), key=lambda x: x[1], reverse=True)
 
-    map_obj = create_map_with_pins(sighting_coordinates, center_coordinates, map_title)
+    map_obj = create_map_with_pins(sighting_coordinates, center_coordinates)
 
     btn_style = ('display:inline-block; background:#c8881a; color:white; padding:7px 12px; '
                  'border-radius:6px; text-decoration:none; font-family:Arial,sans-serif; '
@@ -284,18 +295,57 @@ def map_endpoint():
         }}
     </style>
     <div id="map-header">
-        <a href="/" style="{btn_style}">&#8592; Search</a>
+        <a href="{search_url}" style="{btn_style}">&#8592; Search</a>
         <span id="map-header-title">{map_title}</span>
         <a href="{list_url}" style="{btn_style}">List View</a>
     </div>'''
     map_obj.get_root().html.add_child(folium.Element(nav_html))
 
+    map_var = map_obj.get_name()
+    filter_js = (
+        '<script>window.addEventListener("load",function(){'
+        'var lmap=window["' + map_var + '"];'
+        'if(!lmap)return;'
+        'var active=null;'
+        'window.filterSpecies=function(name){'
+        'var rows=document.querySelectorAll("#map-summary [data-species]");'
+        'var pins=document.querySelectorAll(".leaflet-marker-pane [data-species]");'
+        'if(active===name){'
+        'active=null;'
+        'pins.forEach(function(el){el.closest(".leaflet-marker-icon").style.opacity="";});'
+        'rows.forEach(function(r){r.style.background="";r.style.fontWeight="";r.style.color="";});'
+        '}else{'
+        'active=name;'
+        'pins.forEach(function(el){'
+        'el.closest(".leaflet-marker-icon").style.opacity=el.dataset.species===name?"1":"0.3";'
+        '});'
+        'rows.forEach(function(r){'
+        'var on=r.dataset.species===name;'
+        'r.style.background=on?"rgba(200,136,26,0.15)":"";'
+        'r.style.fontWeight=on?"bold":"";'
+        'r.style.color=on?"#a86f10":"";'
+        '});'
+        'var b=[];'
+        'lmap.eachLayer(function(l){'
+        'if(!l._icon)return;'
+        'var el=l._icon.querySelector("[data-species]");'
+        'if(el&&el.dataset.species===name)b.push(l.getLatLng());'
+        '});'
+        'if(b.length)lmap.fitBounds(L.latLngBounds(b),{padding:[50,50],maxZoom:14});'
+        '}'
+        '};'
+        '});'
+        '</script>'
+    )
+    map_obj.get_root().html.add_child(folium.Element(filter_js))
+
     rows = ''.join(
-        f'<div style="display:flex; justify-content:space-between; align-items:center; '
-        f'padding:4px 0; border-bottom:1px solid #eee;">'
-        f'<span style="font-size:13px; font-family:Arial,sans-serif;">{name}</span>'
-        f'<span style="background:#c8881a; color:white; border-radius:10px; padding:1px 8px; '
-        f'font-size:12px; font-weight:bold; margin-left:8px; white-space:nowrap;">{count}</span>'
+        f'<div data-species="{name}" onclick="filterSpecies(this.dataset.species)"'
+        f' style="display:flex;justify-content:space-between;align-items:center;'
+        f'padding:5px 4px;border-bottom:1px solid #eee;cursor:pointer;border-radius:4px;transition:background 0.12s;">'
+        f'<span style="font-size:13px;font-family:Arial,sans-serif;">{name}</span>'
+        f'<span style="background:#c8881a;color:white;border-radius:10px;padding:1px 8px;'
+        f'font-size:12px;font-weight:bold;margin-left:8px;white-space:nowrap;">{count}</span>'
         f'</div>'
         for name, count in species_summary
     )
@@ -304,8 +354,9 @@ def map_endpoint():
          border-radius:8px; box-shadow:0 2px 10px rgba(0,0,0,0.25); width:260px; max-height:280px;
          display:flex; flex-direction:column; overflow:hidden;">
         <div style="padding:8px 12px; background:#3b5240; color:white;
-             font-family:Arial,sans-serif; font-size:13px; font-weight:bold; flex-shrink:0;">
+             font-family:Arial,sans-serif; font-size:13px; font-weight:bold; flex-shrink:0; line-height:1.5;">
             {len(species_summary)} species &mdash; {len(sighting_coordinates)} sightings
+            <div style="font-size:10px;font-weight:normal;opacity:0.75;margin-top:1px;">Tap species to filter pins</div>
         </div>
         <div style="overflow-y:auto; padding:4px 12px;">{rows}</div>
     </div>'''

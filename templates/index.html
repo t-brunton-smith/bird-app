@@ -4,7 +4,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
     <title>Phlock — Bird Sightings</title>
 
@@ -46,16 +46,15 @@
         }
 
         .hero img {
-            height: 72px;
+            height: 92px;
             width: auto;
             filter: drop-shadow(0 4px 12px rgba(0,0,0,0.25));
         }
 
         .hero h1 {
-            font-family: 'Playfair Display', serif;
+            font-family: 'Outfit', sans-serif;
             font-size: 3rem;
-            font-style: italic;
-            font-weight: 700;
+            font-weight: 800;
             margin: 10px 0 6px;
             letter-spacing: 0.01em;
             text-shadow: 0 2px 8px rgba(0,0,0,0.2);
@@ -201,21 +200,28 @@
 
         /* ── Buttons ── */
         .btn-location {
-            width: 100%;
-            height: 44px;
-            font-size: 15px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 9px;
+            height: 34px;
+            padding: 0 13px;
+            font-size: 13px;
             font-family: 'AntipastoPro', sans-serif;
-            border: 1.5px solid var(--primary);
-            border-radius: var(--radius);
-            background: var(--primary-light);
-            color: var(--primary-dark);
-            cursor: pointer;
-            margin-bottom: 12px;
             font-weight: bold;
-            transition: background 0.15s;
+            border: 1.5px solid var(--border);
+            border-radius: 20px;
+            background: var(--surface);
+            color: var(--muted);
+            cursor: pointer;
+            transition: border-color 0.15s, color 0.15s, background 0.15s;
         }
 
-        .btn-location:hover { background: #dce8d8; }
+        .btn-location:hover {
+            border-color: var(--primary);
+            color: var(--primary-dark);
+            background: var(--primary-light);
+        }
 
         .btn-row {
             display: flex;
@@ -306,6 +312,12 @@
                 <label for="location">Location</label>
                 <input type="text" id="location" name="location"
                        placeholder="City, park, address…" required>
+                <button type="button" class="btn-location" id="use-location-button">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                    </svg>
+                    Use my location
+                </button>
             </div>
 
             <div class="form-group" id="hotspot-group" style="display:none;">
@@ -358,10 +370,6 @@
                 <input type="range" id="back" name="back" min="1" max="30" value="14"
                        oninput="document.getElementById('back-value').textContent = this.value">
             </div>
-
-            <button type="button" class="btn-location" id="use-location-button">
-                📍 Use my location
-            </button>
 
             <div class="btn-row">
                 <button type="submit" class="btn btn-primary"
@@ -446,6 +454,66 @@
         form.action = endpoint;
         form.submit();
     }
+
+    // Restore form state when returning from results/map via the ← Search link
+    (function() {
+        var p = new URLSearchParams(window.location.search);
+        var loc = p.get('location');
+        if (!loc) return;
+
+        document.getElementById('location').value = loc;
+
+        var dist = p.get('dist');
+        if (dist) {
+            document.getElementById('dist').value = dist;
+            document.getElementById('dist-value').textContent = dist;
+        }
+
+        var back = p.get('back');
+        if (back) {
+            document.getElementById('back').value = back;
+            document.getElementById('back-value').textContent = back;
+        }
+
+        var species = p.get('species_name');
+        if (species) {
+            document.getElementById('species_name').value = species;
+            notableToggle.disabled = true;
+        }
+
+        if (p.get('notable') === 'on') {
+            notableToggle.checked = true;
+            speciesInput.disabled = true;
+        }
+
+        var locId   = p.get('loc_id');
+        var locName = p.get('loc_name');
+        var distVal = dist || 25;
+        var grp  = document.getElementById('hotspot-group');
+        var sel  = document.getElementById('hotspot-select');
+        var hint = document.getElementById('hotspot-hint');
+
+        if (locId) {
+            document.getElementById('loc_name').value = locName || '';
+            grp.style.display = 'block';
+            hint.textContent = 'Loading hotspots…';
+            fetch('/api/hotspots?location=' + encodeURIComponent(loc) + '&dist=' + distVal)
+                .then(function(r) { return r.json(); })
+                .then(function(hs) {
+                    sel.innerHTML = '<option value="">All locations in area</option>';
+                    hs.forEach(function(h) {
+                        var o = document.createElement('option');
+                        o.value = h.locId;
+                        o.dataset.name = h.locName;
+                        o.textContent = h.locName + (h.numSpecies ? ' (' + h.numSpecies + ' species)' : '');
+                        if (h.locId === locId) o.selected = true;
+                        sel.appendChild(o);
+                    });
+                    hint.textContent = hs.length + ' hotspot' + (hs.length !== 1 ? 's' : '') + ' found';
+                })
+                .catch(function() { hint.textContent = ''; });
+        }
+    })();
 </script>
 </body>
 </html>

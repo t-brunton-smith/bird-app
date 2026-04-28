@@ -4,7 +4,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
     <title>Bird Sightings — Phlock</title>
     <style>
@@ -45,13 +45,13 @@
             gap: 12px;
         }
 
-        .header img { height: 40px; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.2)); }
+        .header img { height: 48px; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.2)); }
 
         .header h1 {
             margin: 0;
             font-size: 1.4rem;
-            font-family: 'Playfair Display', serif;
-            font-style: italic;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 800;
             letter-spacing: 0.01em;
         }
 
@@ -134,7 +134,21 @@
             padding: 3px 10px 3px 4px;
             font-size: 12px;
             white-space: nowrap;
+            cursor: pointer;
+            transition: background 0.15s, border-color 0.15s;
         }
+
+        .species-chip:hover { background: var(--gold-light); border-color: var(--gold); }
+
+        .species-chip.chip-active {
+            background: var(--gold-light);
+            border-color: var(--gold);
+        }
+
+        .species-chip.chip-active .chip-count { background: var(--gold-dark); }
+
+        #sightings-tbody tr.row-dim { opacity: 0.18; }
+        #sightings-tbody tr.row-lit { background: var(--gold-light) !important; }
 
         .chip-count {
             background: var(--gold);
@@ -309,7 +323,7 @@
 </div>
 
 <div class="toolbar">
-    <a href="/" class="btn">&#8592; Search</a>
+    <a href="{{ search_url }}" class="btn">&#8592; Search</a>
     <a href="{{ map_url }}" class="btn">Map View</a>
     <button class="btn btn-outline" onclick="exportCSV()">&#8595; CSV</button>
     <span class="search-context">
@@ -321,7 +335,7 @@
 
 {% if species_summary %}
 <div class="species-summary">
-    <div class="species-summary-title">{{ species_summary|length }} species</div>
+    <div class="species-summary-title">{{ species_summary|length }} species <span style="font-weight:normal;text-transform:none;letter-spacing:0;font-size:10px;opacity:0.65;">— click to highlight</span></div>
     <div class="species-chips">
         {% for name, count in species_summary %}
         <div class="species-chip">
@@ -366,7 +380,48 @@
 </table>
 
 <script>
+    var activeChip = null;
+
+    document.querySelectorAll('.species-chip').forEach(function(chip) {
+        chip.addEventListener('click', function() {
+            var name = this.querySelector('span:last-child').textContent.trim();
+            var wasActive = this.classList.contains('chip-active');
+
+            // Clear chip states and row states
+            document.querySelectorAll('.species-chip').forEach(function(c) { c.classList.remove('chip-active'); });
+            document.querySelectorAll('#sightings-tbody tr').forEach(function(r) { r.classList.remove('row-dim', 'row-lit'); });
+
+            if (!wasActive) {
+                activeChip = name;
+                this.classList.add('chip-active');
+                // Also clear text filter
+                var fi = document.getElementById('filter-input');
+                if (fi && fi.value) { fi.value = ''; filterTable(''); }
+                var first = null;
+                document.querySelectorAll('#sightings-tbody tr:not(.no-match-row)').forEach(function(row) {
+                    if (row.style.display === 'none') return;
+                    var rowName = row.cells[0] ? row.cells[0].textContent.trim() : '';
+                    if (rowName === name) {
+                        row.classList.add('row-lit');
+                        if (!first) first = row;
+                    } else {
+                        row.classList.add('row-dim');
+                    }
+                });
+                if (first) first.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            } else {
+                activeChip = null;
+            }
+        });
+    });
+
     function filterTable(query) {
+        // Clear chip filter when text search is used
+        if (query.length > 0 && activeChip) {
+            document.querySelectorAll('.species-chip').forEach(function(c) { c.classList.remove('chip-active'); });
+            document.querySelectorAll('#sightings-tbody tr').forEach(function(r) { r.classList.remove('row-dim', 'row-lit'); });
+            activeChip = null;
+        }
         var q = query.toLowerCase();
         var rows = document.querySelectorAll('#sightings-tbody tr:not(.no-match-row)');
         var visible = 0;
