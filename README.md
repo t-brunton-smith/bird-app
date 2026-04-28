@@ -1,13 +1,19 @@
 # Phlock — eBird Sightings App
 
-A Flask web app for browsing recent bird sightings near any location, powered by the [eBird API](https://documenter.getpostman.com/view/664302/S1ENwy59). Search by location, filter by species or notable birds, and view results as a list or an interactive map.
+A Flask web app for browsing recent bird sightings near any location, powered by the [eBird API](https://documenter.getpostman.com/view/664302/S1ENwy59). Search by location, filter by species or notable birds, and view results as a sortable list or an interactive map.
 
 ## Features
 
-- Search recent sightings by location (place name or address)
+- Search recent sightings by location (place name, address, or GPS coordinates)
+- "Use my location" button for GPS-based searches
 - Filter by species name with autocomplete (sourced from eBird taxonomy)
 - Filter for notable/rare sightings only
-- View results as a list or on an interactive map with pins
+- Set search radius (up to 50 km) and lookback window (up to 30 days)
+- Narrow results to a specific eBird hotspot near your location
+- **List view:** sortable, filterable table with links to eBird checklists; click a species chip to highlight matching rows
+- **Map view:** interactive Folium/Leaflet map with per-sighting pins; click a species in the summary panel to highlight its pins and dim others
+- Search parameters preserved in the URL so "← Search" restores the form exactly
+- "How it works" page with step-by-step instructions
 - HTTPS enforced in production; HTTP works on localhost
 
 ## Prerequisites
@@ -87,10 +93,15 @@ The app detects SSL certificates at `/app/ssl` at startup and serves HTTPS autom
 ```
 ├── app.py               # Flask application
 ├── templates/
-│   ├── index.html       # Main search form
-│   ├── results.html     # Sightings list
-│   └── loc_not_found.html
-├── static/              # CSS, JS, fonts, icons
+│   ├── index.html           # Search form
+│   ├── results.html         # List view
+│   ├── how_it_works.html    # How it works page
+│   └── loc_not_found.html   # Error page
+├── static/
+│   ├── style.css        # Global styles
+│   ├── fonts/           # AntipastoPro font
+│   ├── icons/           # Bird icon (multiple sizes)
+│   └── js/              # Client-side scripts
 ├── data/
 │   └── ebird_taxonomy.csv  # Species list for autocomplete
 ├── configs/
@@ -103,7 +114,9 @@ The app detects SSL certificates at `/app/ssl` at startup and serves HTTPS autom
 | Endpoint | Description |
 |----------|-------------|
 | `GET /` | Main search page |
-| `GET /results?location=&species_name=&notable=&dist=&back=` | Sightings list |
-| `GET /map?location=&species_name=&notable=&dist=&back=` | Interactive map |
+| `GET /results?location=&species_name=&notable=&dist=&back=&hotspot=` | Sightings list |
+| `GET /map?location=&species_name=&notable=&dist=&back=&hotspot=` | Interactive map |
+| `GET /how-it-works` | How it works page |
 | `GET /api/species` | JSON list of all species names (for autocomplete) |
 | `GET /location?lat=&long=` | Reverse geocode coordinates to a place name |
+| `GET /api/hotspots?lat=&lng=&dist=` | Nearby eBird hotspots for a given coordinate |
