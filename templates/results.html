@@ -44,9 +44,7 @@
             align-items: center;
             gap: 12px;
         }
-
         .header img { height: 48px; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.2)); }
-
         .header h1 {
             margin: 0;
             font-size: 1.4rem;
@@ -66,7 +64,6 @@
             flex-wrap: wrap;
             box-shadow: 0 1px 4px rgba(0,0,0,0.04);
         }
-
         .btn {
             display: inline-block;
             background: var(--gold);
@@ -82,83 +79,18 @@
             font-family: 'AntipastoPro', sans-serif;
             transition: filter 0.15s;
         }
-
         .btn:hover { filter: brightness(1.08); }
-
         .btn-outline {
             background: var(--surface);
             color: var(--gold-dark);
             border: 1.5px solid var(--gold);
         }
-
         .btn-outline:hover { background: var(--gold-light); filter: none; }
-
         .search-context {
             color: var(--muted);
             font-size: 13px;
             flex: 1;
             min-width: 0;
-        }
-
-        /* ── Species summary chips ── */
-        .species-summary {
-            padding: 12px 16px;
-            background: var(--surface);
-            border-bottom: 1px solid var(--border);
-        }
-
-        .species-summary-title {
-            font-size: 11px;
-            font-weight: bold;
-            color: var(--muted);
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            margin-bottom: 8px;
-        }
-
-        .species-chips {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-            max-height: 130px;
-            overflow-y: auto;
-        }
-
-        .species-chip {
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            background: var(--bg);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 3px 10px 3px 4px;
-            font-size: 12px;
-            white-space: nowrap;
-            cursor: pointer;
-            transition: background 0.15s, border-color 0.15s;
-        }
-
-        .species-chip:hover { background: var(--gold-light); border-color: var(--gold); }
-
-        .species-chip.chip-active {
-            background: var(--gold-light);
-            border-color: var(--gold);
-        }
-
-        .species-chip.chip-active .chip-count { background: var(--gold-dark); }
-
-        #sightings-tbody tr.row-dim { opacity: 0.18; }
-        #sightings-tbody tr.row-lit { background: var(--gold-light) !important; }
-
-        .chip-count {
-            background: var(--gold);
-            color: white;
-            border-radius: 12px;
-            padding: 1px 7px;
-            font-size: 11px;
-            font-weight: bold;
-            min-width: 22px;
-            text-align: center;
         }
 
         /* ── Filter bar ── */
@@ -167,7 +99,6 @@
             background: var(--surface);
             border-bottom: 1px solid var(--border);
         }
-
         .filter-bar input {
             width: 100%;
             padding: 9px 14px;
@@ -178,7 +109,6 @@
             color: var(--text);
             transition: border-color 0.15s, box-shadow 0.15s;
         }
-
         .filter-bar input:focus {
             outline: none;
             border-color: var(--primary);
@@ -186,13 +116,12 @@
             box-shadow: 0 0 0 3px rgba(95,122,95,0.15);
         }
 
-        /* ── Desktop table ── */
+        /* ── Table shell ── */
         .sightings-table {
             border-collapse: collapse;
             width: 100%;
             background: var(--surface);
         }
-
         .sightings-table th {
             background: var(--bg);
             padding: 10px 14px;
@@ -203,115 +132,163 @@
             color: var(--muted);
             border-bottom: 2px solid var(--border);
             font-weight: bold;
+            white-space: nowrap;
         }
-
-        .sightings-table th.sortable {
-            cursor: pointer;
-            user-select: none;
-        }
-
+        .sightings-table th.sortable { cursor: pointer; user-select: none; }
         .sightings-table th.sortable:hover { background: #dce8d8; color: var(--text); }
         .sightings-table th.sort-asc::after  { content: " ▲"; font-size: 10px; }
         .sightings-table th.sort-desc::after { content: " ▼"; font-size: 10px; }
 
-        .sightings-table td {
+        /* ── Species rows ── */
+        .species-row {
+            cursor: pointer;
+            background: var(--surface);
+            transition: background 0.12s;
+        }
+        .species-row:hover  { background: var(--primary-light); }
+        .species-row.expanded { background: var(--primary-light); }
+        .species-row td {
             border-bottom: 1px solid var(--border);
             padding: 10px 14px;
             font-size: 14px;
-            vertical-align: top;
+            vertical-align: middle;
         }
+        .species-row.expanded td { border-bottom: none; }
 
-        .sightings-table tbody tr:hover { background: var(--primary-light); }
-
-        .count-cell {
+        .expand-icon {
+            display: inline-block;
+            font-size: 9px;
             color: var(--muted);
-            font-variant-numeric: tabular-nums;
+            margin-right: 7px;
+            transition: transform 0.15s;
+            vertical-align: middle;
+        }
+        .species-row.expanded .expand-icon { transform: rotate(90deg); }
+
+        .species-name { font-weight: bold; vertical-align: middle; }
+        .species-list-count {
+            display: block;
+            font-size: 11px;
+            color: var(--muted);
+            font-weight: normal;
+            margin-top: 2px;
+            padding-left: 18px;
         }
 
+        .count-badge {
+            display: inline-block;
+            background: var(--gold);
+            color: white;
+            border-radius: 12px;
+            padding: 2px 9px;
+            font-size: 12px;
+            font-weight: bold;
+            min-width: 28px;
+            text-align: center;
+        }
+        .count-badge.unknown { background: var(--muted); }
+
+        /* ── Checklist rows ── */
+        .checklist-row { display: none; }
+        .checklist-row.visible { display: table-row; }
+        .checklist-row td {
+            padding: 0;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg);
+        }
+        .checklist-item {
+            display: flex;
+            align-items: center;
+            padding: 7px 14px 7px 36px;
+            gap: 8px;
+            font-size: 13px;
+        }
+        .ci-loc  { flex: 1; color: var(--text); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .ci-date { flex-shrink: 0; width: 110px; color: var(--muted); }
+        .ci-count { flex-shrink: 0; width: 52px; text-align: right; color: var(--muted); padding-right: 4px; }
+        .ci-link  { flex-shrink: 0; width: 54px; text-align: right; }
         .checklist-link {
             color: var(--gold-dark);
             font-size: 12px;
-            white-space: nowrap;
             text-decoration: none;
+            white-space: nowrap;
         }
-
         .checklist-link:hover { text-decoration: underline; }
 
-        /* ── Mobile card layout ── */
-        @media (max-width: 640px) {
-            .header h1 { font-size: 1.1rem; }
-            .search-context { font-size: 12px; width: 100%; }
-
-            .sightings-table thead { display: none; }
-
-            .sightings-table, .sightings-table tbody,
-            .sightings-table tr, .sightings-table td { display: block; }
-
-            .sightings-table tbody { background: transparent; }
-
-            .sightings-table tbody tr {
-                margin: 8px 12px;
-                border: 1px solid var(--border);
-                border-radius: var(--radius);
-                padding: 12px 14px;
-                background: var(--surface);
-                box-shadow: var(--shadow);
-            }
-
-            .sightings-table tbody tr:hover { background: var(--surface); }
-
-            .sightings-table td {
-                border: none;
-                padding: 3px 0;
-            }
-
-            .sightings-table td:nth-child(1) {
-                font-size: 15px;
-                font-weight: bold;
-                color: var(--text);
-                padding-bottom: 8px;
-                border-bottom: 1px solid var(--border);
-                margin-bottom: 4px;
-            }
-
-            .sightings-table td:nth-child(1)::before { display: none; }
-
-            .sightings-table td:nth-child(2)::before { content: "DATE"; }
-            .sightings-table td:nth-child(3)::before { content: "LOCATION"; }
-            .sightings-table td:nth-child(4)::before { content: "COUNT"; }
-
-            .sightings-table td:nth-child(2)::before,
-            .sightings-table td:nth-child(3)::before,
-            .sightings-table td:nth-child(4)::before {
-                display: block;
-                font-size: 10px;
-                font-weight: bold;
-                letter-spacing: 0.06em;
-                color: var(--muted);
-                margin-bottom: 1px;
-            }
-
-            .sightings-table td:nth-child(2),
-            .sightings-table td:nth-child(3),
-            .sightings-table td:nth-child(4) { font-size: 13px; color: #444; }
-
-            .sightings-table td:nth-child(5) { padding-top: 8px; }
+        /* ── No-match message ── */
+        #no-match-msg {
+            display: none;
+            padding: 28px 16px;
+            text-align: center;
+            color: var(--muted);
+            font-style: italic;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
         }
 
-        /* ── Empty / no-match ── */
+        /* ── Empty state ── */
         .empty-state {
             padding: 60px 16px;
             text-align: center;
             color: var(--muted);
         }
-
         .empty-state p { font-size: 16px; margin-bottom: 20px; }
 
-        .no-match-row td {
-            text-align: center;
-            color: var(--muted);
-            padding: 20px;
-            font-style: italic;
+        /* ── Mobile ── */
+        @media (max-width: 640px) {
+            .header h1 { font-size: 1.1rem; }
+            .search-context { font-size: 12px; width: 100%; }
+
+            .sightings-table thead { display: none; }
+            .sightings-table,
+            .sightings-table tbody { display: block; background: transparent; }
+
+            /* Species row → card */
+            .species-row { display: block; }
+            .species-row td { display: block; border: none; padding: 0; background: transparent; }
+            .species-row > td:first-child {
+                display: flex;
+                align-items: flex-start;
+                padding: 12px 14px 10px;
+            }
+            .species-row > td:nth-child(2) { display: none; } /* hide Latest col; newest checklist shows date */
+            .species-row > td:nth-child(3) {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                padding: 0 14px 12px;
+                font-size: 12px;
+                color: var(--muted);
+            }
+            .species-row > td:nth-child(4) { display: none; }
+
+            .species-row {
+                margin: 8px 12px 0;
+                border: 1px solid var(--border);
+                border-radius: var(--radius) var(--radius) 0 0;
+                background: var(--surface) !important;
+                box-shadow: var(--shadow);
+            }
+            .species-row:not(.expanded) {
+                border-radius: var(--radius);
+                margin-bottom: 0;
+            }
+
+            /* Checklist rows → connected sub-cards */
+            .checklist-row { display: none; }
+            .checklist-row.visible { display: block; margin: 0 12px; border: 1px solid var(--border); border-top: none; background: var(--bg); }
+            .checklist-row.visible:last-of-type,
+            .checklist-row.visible + .species-row,
+            .checklist-row.visible + #no-match-msg { border-radius: 0 0 var(--radius) var(--radius); }
+            .checklist-row td { display: block; padding: 0; border: none; background: transparent; }
+
+            .checklist-item { flex-wrap: wrap; padding: 8px 12px; gap: 2px 8px; }
+            .ci-loc  { width: 100%; order: 1; white-space: normal; }
+            .ci-date { width: auto; order: 2; font-size: 12px; }
+            .ci-count { width: auto; order: 3; padding-right: 0; }
+            .ci-link  { width: auto; order: 4; margin-left: auto; }
+
+            .species-list-count { padding-left: 0; margin-top: 1px; }
         }
     </style>
 </head>
@@ -327,162 +304,181 @@
     <a href="{{ map_url }}" class="btn">Map View</a>
     <button class="btn btn-outline" onclick="exportCSV()">&#8595; CSV</button>
     <span class="search-context">
-        <strong>{{ sightings|length }}</strong> sighting{{ 's' if sightings|length != 1 else '' }}
+        <strong>{{ total_sightings }}</strong> sighting{{ 's' if total_sightings != 1 else '' }},
+        <strong>{{ species_data|length }}</strong> species
         near <strong>{{ location }}</strong>{% if loc_name %} &mdash; <strong>{{ loc_name }}</strong>{% endif %}{% if species_name %} &mdash; <strong>{{ species_name }}</strong>{% endif %}{% if notable %} &mdash; notable only{% endif %}
-        &mdash; {{ dist }} km &mdash; {{ back }} day{{ 's' if back != 1 else '' }}
+        &mdash; {{ dist }}&thinsp;km &mdash; {{ back }} day{{ 's' if back != 1 else '' }}
     </span>
 </div>
 
-{% if species_summary %}
-<div class="species-summary">
-    <div class="species-summary-title">{{ species_summary|length }} species <span style="font-weight:normal;text-transform:none;letter-spacing:0;font-size:10px;opacity:0.65;">— click to highlight</span></div>
-    <div class="species-chips">
-        {% for name, count in species_summary %}
-        <div class="species-chip">
-            <span class="chip-count">{{ count if count is not none else '—' }}</span>
-            <span>{{ name }}</span>
-        </div>
-        {% endfor %}
-    </div>
-</div>
-{% endif %}
-
-{% if sightings %}
+{% if species_data %}
 <div class="filter-bar">
-    <input type="text" id="filter-input" placeholder="Filter by species, location, or date…"
+    <input type="text" id="filter-input" placeholder="Filter by species or location…"
            oninput="filterTable(this.value)">
 </div>
+
+<div id="no-match-msg">No species match this filter.</div>
+
 <table class="sightings-table">
     <thead>
     <tr>
-        <th class="sortable" onclick="sortTable(0)">Species</th>
-        <th class="sortable" onclick="sortTable(1)">Date</th>
-        <th class="sortable" onclick="sortTable(2)">Location</th>
-        <th class="sortable" onclick="sortTable(3)">Count</th>
-        <th>Checklist</th>
+        <th class="sortable" data-field="name" onclick="sortTable('name')">Species</th>
+        <th class="sortable" data-field="date" onclick="sortTable('date')">Latest Seen</th>
+        <th class="sortable sort-desc" data-field="count" onclick="sortTable('count')">Total Count</th>
+        <th></th>
     </tr>
     </thead>
-    <tbody id="sightings-tbody">
-    {% for sighting in sightings %}
-    <tr>
-        <td>{{ sighting[0] }}</td>
-        <td data-sort="{{ sighting[5] }}">{{ sighting[1] }}</td>
-        <td>{{ sighting[2] }}</td>
-        <td class="count-cell">{{ sighting[4] if sighting[4] is not none else '—' }}</td>
+    <tbody id="sightings-tbody" data-sort-field="count" data-sort-dir="desc">
+    {% for species in species_data %}
+    {% set sidx = species.idx %}
+    <tr class="species-row"
+        data-idx="{{ sidx }}"
+        data-name="{{ species.name }}"
+        data-date="{{ species.latest_dt }}"
+        data-count="{{ species.total if species.total is not none else -1 }}"
+        onclick="toggleSpecies(this)">
         <td>
-            {% if sighting[3] %}
-            <a class="checklist-link" href="https://ebird.org/checklist/{{ sighting[3] }}" target="_blank">View ↗</a>
+            <span class="expand-icon">&#9654;</span><span class="species-name">{{ species.name }}</span>
+            <span class="species-list-count">{{ species.records|length }} checklist{{ 's' if species.records|length != 1 else '' }}</span>
+        </td>
+        <td>{{ species.records[0].date }}</td>
+        <td>
+            {% if species.total is not none %}
+            <span class="count-badge">{{ species.total }}</span>
+            {% else %}
+            <span class="count-badge unknown">—</span>
             {% endif %}
         </td>
+        <td></td>
     </tr>
+    {% for record in species.records %}
+    <tr class="checklist-row" data-idx="{{ sidx }}">
+        <td colspan="4">
+            <div class="checklist-item">
+                <span class="ci-loc">{{ record.loc_name }}</span>
+                <span class="ci-date">{{ record.date }}</span>
+                <span class="ci-count">{{ record.how_many if record.how_many is not none else '—' }}</span>
+                <span class="ci-link">
+                    {% if record.sub_id %}
+                    <a class="checklist-link" href="https://ebird.org/checklist/{{ record.sub_id }}" target="_blank">View ↗</a>
+                    {% endif %}
+                </span>
+            </div>
+        </td>
+    </tr>
+    {% endfor %}
     {% endfor %}
     </tbody>
 </table>
 
 <script>
-    var activeChip = null;
-
-    document.querySelectorAll('.species-chip').forEach(function(chip) {
-        chip.addEventListener('click', function() {
-            var name = this.querySelector('span:last-child').textContent.trim();
-            var wasActive = this.classList.contains('chip-active');
-
-            // Clear chip states and row states
-            document.querySelectorAll('.species-chip').forEach(function(c) { c.classList.remove('chip-active'); });
-            document.querySelectorAll('#sightings-tbody tr').forEach(function(r) { r.classList.remove('row-dim', 'row-lit'); });
-
-            if (!wasActive) {
-                activeChip = name;
-                this.classList.add('chip-active');
-                // Also clear text filter
-                var fi = document.getElementById('filter-input');
-                if (fi && fi.value) { fi.value = ''; filterTable(''); }
-                var first = null;
-                document.querySelectorAll('#sightings-tbody tr:not(.no-match-row)').forEach(function(row) {
-                    if (row.style.display === 'none') return;
-                    var rowName = row.cells[0] ? row.cells[0].textContent.trim() : '';
-                    if (rowName === name) {
-                        row.classList.add('row-lit');
-                        if (!first) first = row;
-                    } else {
-                        row.classList.add('row-dim');
-                    }
-                });
-                if (first) first.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            } else {
-                activeChip = null;
-            }
+    function toggleSpecies(row) {
+        var idx = row.dataset.idx;
+        var wasExpanded = row.classList.contains('expanded');
+        row.classList.toggle('expanded');
+        document.querySelectorAll('.checklist-row[data-idx="' + idx + '"]').forEach(function(r) {
+            r.classList.toggle('visible', !wasExpanded);
         });
-    });
-
-    function filterTable(query) {
-        // Clear chip filter when text search is used
-        if (query.length > 0 && activeChip) {
-            document.querySelectorAll('.species-chip').forEach(function(c) { c.classList.remove('chip-active'); });
-            document.querySelectorAll('#sightings-tbody tr').forEach(function(r) { r.classList.remove('row-dim', 'row-lit'); });
-            activeChip = null;
-        }
-        var q = query.toLowerCase();
-        var rows = document.querySelectorAll('#sightings-tbody tr:not(.no-match-row)');
-        var visible = 0;
-        rows.forEach(function(row) {
-            var match = row.textContent.toLowerCase().includes(q);
-            row.style.display = match ? '' : 'none';
-            if (match) visible++;
-        });
-        var noMatch = document.getElementById('no-match-row');
-        if (visible === 0) {
-            if (!noMatch) {
-                var tr = document.createElement('tr');
-                tr.id = 'no-match-row';
-                tr.className = 'no-match-row';
-                tr.innerHTML = '<td colspan="5">No results match "' + query + '"</td>';
-                document.getElementById('sightings-tbody').appendChild(tr);
-            }
-        } else if (noMatch) {
-            noMatch.remove();
-        }
     }
 
-    function sortTable(col) {
+    function filterTable(query) {
+        var q = query.toLowerCase().trim();
+        var visibleCount = 0;
+
+        document.querySelectorAll('.species-row').forEach(function(srow) {
+            var idx = srow.dataset.idx;
+            var checklistRows = document.querySelectorAll('.checklist-row[data-idx="' + idx + '"]');
+
+            var nameMatch = !q || srow.dataset.name.toLowerCase().includes(q);
+            var locMatch = false;
+            if (!nameMatch && q) {
+                checklistRows.forEach(function(cr) {
+                    var loc = cr.querySelector('.ci-loc');
+                    if (loc && loc.textContent.toLowerCase().includes(q)) locMatch = true;
+                });
+            }
+
+            var show = nameMatch || locMatch;
+            srow.style.display = show ? '' : 'none';
+
+            checklistRows.forEach(function(cr) {
+                if (!show) {
+                    cr.style.display = 'none';
+                } else if (srow.classList.contains('expanded') && cr.classList.contains('visible')) {
+                    cr.style.display = '';
+                } else {
+                    cr.style.display = 'none';
+                }
+            });
+
+            if (show) visibleCount++;
+        });
+
+        document.getElementById('no-match-msg').style.display = (visibleCount === 0 && q) ? 'block' : 'none';
+    }
+
+    function sortTable(field) {
         var tbody = document.getElementById('sightings-tbody');
-        var rows = Array.from(tbody.querySelectorAll('tr:not(.no-match-row)'));
-        var prevCol = parseInt(tbody.dataset.sortCol);
-        var dir = (prevCol === col && tbody.dataset.sortDir === 'asc') ? 'desc' : 'asc';
-        tbody.dataset.sortCol = col;
+        var prevField = tbody.dataset.sortField;
+        var dir = (prevField === field && tbody.dataset.sortDir === 'asc') ? 'desc' : 'asc';
+        tbody.dataset.sortField = field;
         tbody.dataset.sortDir = dir;
 
-        rows.sort(function(a, b) {
-            var aVal = a.cells[col] ? (a.cells[col].dataset.sort || a.cells[col].textContent.trim()) : '';
-            var bVal = b.cells[col] ? (b.cells[col].dataset.sort || b.cells[col].textContent.trim()) : '';
-            if (col === 3) {
-                return dir === 'asc' ? (parseInt(aVal) || 0) - (parseInt(bVal) || 0)
-                                     : (parseInt(bVal) || 0) - (parseInt(aVal) || 0);
+        var speciesRows = Array.from(tbody.querySelectorAll('.species-row'));
+        var groups = speciesRows.map(function(srow) {
+            var idx = srow.dataset.idx;
+            return {
+                srow: srow,
+                children: Array.from(tbody.querySelectorAll('.checklist-row[data-idx="' + idx + '"]'))
+            };
+        });
+
+        groups.sort(function(a, b) {
+            if (field === 'name') {
+                var an = a.srow.dataset.name || '';
+                var bn = b.srow.dataset.name || '';
+                return dir === 'asc' ? an.localeCompare(bn) : bn.localeCompare(an);
             }
-            return dir === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+            if (field === 'date') {
+                var ad = a.srow.dataset.date || '';
+                var bd = b.srow.dataset.date || '';
+                return dir === 'asc' ? ad.localeCompare(bd) : bd.localeCompare(ad);
+            }
+            if (field === 'count') {
+                var ac = parseFloat(a.srow.dataset.count);
+                var bc = parseFloat(b.srow.dataset.count);
+                if (ac < 0 && bc < 0) return 0;
+                if (ac < 0) return 1;
+                if (bc < 0) return -1;
+                return dir === 'asc' ? ac - bc : bc - ac;
+            }
+            return 0;
         });
 
-        rows.forEach(function(row) { tbody.appendChild(row); });
+        groups.forEach(function(g) {
+            tbody.appendChild(g.srow);
+            g.children.forEach(function(r) { tbody.appendChild(r); });
+        });
 
-        document.querySelectorAll('.sightings-table th.sortable').forEach(function(th) {
+        document.querySelectorAll('.sightings-table th[data-field]').forEach(function(th) {
             th.classList.remove('sort-asc', 'sort-desc');
+            if (th.dataset.field === field) th.classList.add('sort-' + dir);
         });
-        document.querySelectorAll('.sightings-table th.sortable')[col].classList.add('sort-' + dir);
     }
 
     function exportCSV() {
-        var rows = [['Species', 'Date', 'Location', 'Count', 'Checklist']];
-        document.querySelectorAll('#sightings-tbody tr:not(.no-match-row)').forEach(function(row) {
-            if (row.style.display === 'none') return;
-            var cells = row.cells;
-            var link = cells[4] ? cells[4].querySelector('a') : null;
-            rows.push([
-                cells[0].textContent.trim(),
-                cells[1].textContent.trim(),
-                cells[2].textContent.trim(),
-                cells[3].textContent.trim(),
-                link ? link.href : ''
-            ]);
+        var rows = [['Species', 'Date', 'Location', 'Count', 'Checklist URL']];
+        document.querySelectorAll('.species-row').forEach(function(srow) {
+            if (srow.style.display === 'none') return;
+            var species = srow.dataset.name;
+            var idx = srow.dataset.idx;
+            document.querySelectorAll('.checklist-row[data-idx="' + idx + '"]').forEach(function(cr) {
+                var loc   = (cr.querySelector('.ci-loc')  || {}).textContent || '';
+                var date  = (cr.querySelector('.ci-date') || {}).textContent || '';
+                var count = (cr.querySelector('.ci-count')|| {}).textContent || '';
+                var link  = cr.querySelector('.checklist-link');
+                rows.push([species.trim(), date.trim(), loc.trim(), count.trim(), link ? link.href : '']);
+            });
         });
         var csv = rows.map(function(r) {
             return r.map(function(v) { return '"' + v.replace(/"/g, '""') + '"'; }).join(',');

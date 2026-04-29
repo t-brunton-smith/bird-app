@@ -1,5 +1,6 @@
 import configparser
 import os
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from urllib.parse import urlencode
 
@@ -102,8 +103,8 @@ def hotspots_endpoint():
 def results():
     location = request.args.get('location')
     notable = request.args.get('notable') == 'on'
-    dist = int(request.args.get('dist', 25))
-    back = int(request.args.get('back', 14))
+    dist = int(request.args.get('dist', 10))
+    back = int(request.args.get('back', 7))
 
     try:
         species_name = request.args.get('species_name') or None
@@ -145,8 +146,21 @@ def coordinates_to_location(latitude, longitude):
     return None
 
 
-def results_from_coordinates(lat, lng, notable=False, species_code=None, dist=25, back=14,
+def _fetch_all_obs_for_species(species_code, lat, lng, dist, back, headers):
+    """Fetch all recent checklist-level observations for one species. Returns [] on any error."""
+    try:
+        url = (f'https://api.ebird.org/v2/data/obs/geo/recent/{species_code}'
+               f'?lat={lat}&lng={lng}&dist={dist}&maxResults=10000&back={back}')
+        result = requests.get(url, headers=headers, timeout=10).json()
+        return result if isinstance(result, list) else []
+    except Exception:
+        return []
+
+
+def results_from_coordinates(lat, lng, notable=False, species_code=None, dist=10, back=7,
                               location='', species_name=None, loc_id=None, loc_name=None):
+    headers = {'X-eBirdApiToken': _EBIRD_TOKEN}
+
     if loc_id:
         if notable:
             url = f'https://api.ebird.org/v2/data/obs/{loc_id}/recent/notable?back={back}&maxResults=10000'
@@ -154,35 +168,69 @@ def results_from_coordinates(lat, lng, notable=False, species_code=None, dist=25
             url = f'https://api.ebird.org/v2/data/obs/{loc_id}/recent/{species_code}?back={back}&maxResults=10000'
         else:
             url = f'https://api.ebird.org/v2/data/obs/{loc_id}/recent?back={back}&maxResults=10000'
-    elif notable:
-        url = f'https://api.ebird.org/v2/data/obs/geo/recent/notable?lat={lat}&lng={lng}&dist={dist}&maxResults=10000&back={back}'
+        all_obs = requests.get(url, headers=headers, timeout=10).json()
     elif species_code:
         url = f"https://api.ebird.org/v2/data/obs/geo/recent/{species_code}?lat={lat}&lng={lng}&dist={dist}&maxResults=10000&back={back}"
+        all_obs = requests.get(url, headers=headers, timeout=10).json()
     else:
-        url = f'https://api.ebird.org/v2/data/obs/geo/recent?lat={lat}&lng={lng}&dist={dist}&maxResults=10000&back={back}'
+        # Notable index identifies which species had notable sightings; regular index covers all.
+        # Either way, Step 2 expands each species to all its checklists.
+        if notable:
+            index_url = (f'https://api.ebird.org/v2/data/obs/geo/recent/notable'
+                         f'?lat={lat}&lng={lng}&dist={dist}&maxResults=10000&back={back}')
+        else:
+            index_url = (f'https://api.ebird.org/v2/data/obs/geo/recent'
+                         f'?lat={lat}&lng={lng}&dist={dist}&maxResults=10000&back={back}')
+        index_obs = requests.get(index_url, headers=headers, timeout=10).json()
+        species_codes = list({obs['speciesCode'] for obs in index_obs if obs.get('speciesCode')})
+        if species_codes:
+            all_obs = []
+            with ThreadPoolExecutor(max_workers=20) as executor:
+                futures = {
+                    executor.submit(_fetch_all_obs_for_species, code, lat, lng, dist, back, headers): code
+                    for code in species_codes
+                }
+                for future in as_completed(futures):
+                    all_obs.extend(future.result())
+        else:
+            all_obs = index_obs
 
-    headers = {'X-eBirdApiToken': _EBIRD_TOKEN}
-    response = requests.get(url, headers=headers, timeout=10)
+    groups = {}
+    order = []
+    for obs in all_obs:
+        name = obs.get('comName', '')
+        if not name:
+            continue
+        raw_dt = obs.get('obsDt', '')
+        record = {
+            'date': format_obs_date(raw_dt),
+            'raw_dt': raw_dt,
+            'loc_name': obs.get('locName', ''),
+            'sub_id': obs.get('subId', ''),
+            'how_many': obs.get('howMany'),
+        }
+        if name not in groups:
+            groups[name] = []
+            order.append(name)
+        groups[name].append(record)
 
-    sightings = []
-    for sighting in response.json():
-        raw_dt = sighting.get('obsDt', '')
-        sightings.append((
-            sighting['comName'],
-            format_obs_date(raw_dt),
-            sighting['locName'],
-            sighting.get('subId', ''),
-            sighting.get('howMany'),
-            raw_dt,
-        ))
+    species_data = []
+    for name in order:
+        records = sorted(groups[name], key=lambda r: r['raw_dt'], reverse=True)
+        known = [r['how_many'] for r in records if r['how_many'] is not None]
+        total = sum(known) if known else None
+        species_data.append({
+            'name': name,
+            'total': total,
+            'latest_dt': records[0]['raw_dt'] if records else '',
+            'records': records,
+        })
 
-    totals = {}
-    for s in sightings:
-        if s[4] is not None:
-            totals[s[0]] = totals.get(s[0], 0) + s[4]
-        elif s[0] not in totals:
-            totals[s[0]] = None
-    species_summary = sorted(totals.items(), key=lambda x: (x[1] is None, -(x[1] or 0)))
+    species_data.sort(key=lambda s: (s['total'] is None, -(s['total'] or 0)))
+    for i, s in enumerate(species_data):
+        s['idx'] = i
+
+    total_sightings = sum(len(s['records']) for s in species_data)
 
     params = {'location': location, 'dist': dist, 'back': back}
     if species_name:
@@ -196,10 +244,14 @@ def results_from_coordinates(lat, lng, notable=False, species_code=None, dist=25
     map_url = '/map?' + urlencode(params)
     search_url = '/?' + urlencode(params)
 
-    return render_template('results.html', sightings=sightings, location=location,
-                           species_name=species_name, notable=notable, dist=dist, back=back,
+    return render_template('results.html',
+                           species_data=species_data,
+                           total_sightings=total_sightings,
+                           location=location,
+                           species_name=species_name, notable=notable,
+                           dist=dist, back=back,
                            map_url=map_url, search_url=search_url,
-                           species_summary=species_summary, loc_name=loc_name)
+                           loc_name=loc_name)
 
 
 def create_map_with_pins(locations, center_location):
@@ -244,8 +296,8 @@ def map_endpoint():
         return render_template('loc_not_found.html', location=location)
     lat, lng = coords
     center_coordinates = (lat, lng)
-    dist = int(request.args.get('dist', 25))
-    back = int(request.args.get('back', 14))
+    dist = int(request.args.get('dist', 10))
+    back = int(request.args.get('back', 7))
 
     notable = request.args.get('notable') == 'on'
     species_name = request.args.get('species_name') or None
@@ -279,7 +331,7 @@ def map_endpoint():
     totals = {}
     for s in sighting_coordinates:
         if s[4] is not None:
-            totals[s[2]] = totals.get(s[2], 0) + s[4]
+            totals[s[2]] = (totals.get(s[2]) or 0) + s[4]
         elif s[2] not in totals:
             totals[s[2]] = None
     species_summary = sorted(totals.items(), key=lambda x: (x[1] is None, -(x[1] or 0)))
@@ -388,7 +440,7 @@ def species_name_to_code(species_name):
     return _SPECIES_CODES.get(species_name.lower()) if species_name else None
 
 
-def get_species_sightings_at_coordinates(coordinates, notable=False, species_code=None, dist=25, back=14, loc_id=None):
+def get_species_sightings_at_coordinates(coordinates, notable=False, species_code=None, dist=10, back=7, loc_id=None):
     center_lat, center_lng = coordinates
     headers = {'X-eBirdApiToken': _EBIRD_TOKEN}
 
@@ -399,23 +451,39 @@ def get_species_sightings_at_coordinates(coordinates, notable=False, species_cod
             url = f'https://api.ebird.org/v2/data/obs/{loc_id}/recent/notable?back={back}&maxResults=10000'
         else:
             url = f'https://api.ebird.org/v2/data/obs/{loc_id}/recent?back={back}&maxResults=10000'
+        all_obs = requests.get(url, headers=headers, timeout=10).json()
     elif species_code:
         url = f"https://api.ebird.org/v2/data/obs/geo/recent/{species_code}?lat={center_lat}&lng={center_lng}&dist={dist}&maxResults=10000&back={back}"
-    elif notable:
-        url = f'https://api.ebird.org/v2/data/obs/geo/recent/notable?lat={center_lat}&lng={center_lng}&dist={dist}&maxResults=10000&back={back}'
+        all_obs = requests.get(url, headers=headers, timeout=10).json()
     else:
-        url = f"https://api.ebird.org/v2/data/obs/geo/recent?lat={center_lat}&lng={center_lng}&dist={dist}&maxResults=10000&back={back}"
-
-    response = requests.get(url, headers=headers, timeout=10)
+        if notable:
+            index_url = (f'https://api.ebird.org/v2/data/obs/geo/recent/notable'
+                         f'?lat={center_lat}&lng={center_lng}&dist={dist}&maxResults=10000&back={back}')
+        else:
+            index_url = (f'https://api.ebird.org/v2/data/obs/geo/recent'
+                         f'?lat={center_lat}&lng={center_lng}&dist={dist}&maxResults=10000&back={back}')
+        index_obs = requests.get(index_url, headers=headers, timeout=10).json()
+        species_codes = list({obs['speciesCode'] for obs in index_obs if obs.get('speciesCode')})
+        if species_codes:
+            all_obs = []
+            with ThreadPoolExecutor(max_workers=20) as executor:
+                futures = {
+                    executor.submit(_fetch_all_obs_for_species, code, center_lat, center_lng, dist, back, headers): code
+                    for code in species_codes
+                }
+                for future in as_completed(futures):
+                    all_obs.extend(future.result())
+        else:
+            all_obs = index_obs
 
     sighting_locations = []
-    for this in response.json():
-        lat = this.get('lat')
-        lng = this.get('lng')
+    for this in all_obs:
+        obs_lat = this.get('lat')
+        obs_lng = this.get('lng')
         comName = this.get('comName')
-        if not all((lat, lng, comName)):
+        if obs_lat is None or obs_lng is None or not comName:
             continue
-        sighting_locations.append((lat, lng, comName, format_obs_date(this.get('obsDt', '')), this.get('howMany'), this.get('subId', '')))
+        sighting_locations.append((obs_lat, obs_lng, comName, format_obs_date(this.get('obsDt', '')), this.get('howMany'), this.get('subId', '')))
 
     return sighting_locations
 

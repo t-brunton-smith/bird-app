@@ -353,10 +353,10 @@
                 <label for="dist">
                     <div class="slider-header">
                         <span>Search radius</span>
-                        <span class="slider-value"><span id="dist-value">25</span> km</span>
+                        <span class="slider-value"><span id="dist-value">10</span> km</span>
                     </div>
                 </label>
-                <input type="range" id="dist" name="dist" min="5" max="50" value="25"
+                <input type="range" id="dist" name="dist" min="5" max="50" value="10"
                        oninput="document.getElementById('dist-value').textContent = this.value">
             </div>
 
@@ -364,10 +364,10 @@
                 <label for="back">
                     <div class="slider-header">
                         <span>Days back</span>
-                        <span class="slider-value"><span id="back-value">14</span> days</span>
+                        <span class="slider-value"><span id="back-value">7</span> days</span>
                     </div>
                 </label>
-                <input type="range" id="back" name="back" min="1" max="30" value="14"
+                <input type="range" id="back" name="back" min="1" max="30" value="7"
                        oninput="document.getElementById('back-value').textContent = this.value">
             </div>
 
@@ -488,7 +488,7 @@
 
         var locId   = p.get('loc_id');
         var locName = p.get('loc_name');
-        var distVal = dist || 25;
+        var distVal = dist || 10;
         var grp  = document.getElementById('hotspot-group');
         var sel  = document.getElementById('hotspot-select');
         var hint = document.getElementById('hotspot-hint');
