@@ -8,10 +8,11 @@ A Flask web app for browsing recent bird sightings near any location, powered by
 - "Use my location" button for GPS-based searches
 - Filter by species name with autocomplete (sourced from eBird taxonomy)
 - Filter for notable/rare sightings only
-- Set search radius (up to 50 km) and lookback window (up to 30 days)
+- Set search radius (up to 50 km) and lookback window (up to 30 days); defaults are 10 km and 7 days
 - Narrow results to a specific eBird hotspot near your location
-- **List view:** sortable, filterable table with links to eBird checklists; click a species chip to highlight matching rows
-- **Map view:** interactive Folium/Leaflet map with per-sighting pins; click a species in the summary panel to highlight its pins and dim others
+- **List view:** species grouped with all individual checklists nested beneath; sortable and filterable; links to eBird checklists; click a species to expand/collapse its checklists
+- **Map view:** interactive Folium/Leaflet map with one pin per checklist observation; click a species in the summary panel to highlight its pins and dim others
+- Results cover all location types — hotspots, personal locations, and private locations — not just eBird hotspots
 - Search parameters preserved in the URL so "← Search" restores the form exactly
 - "How it works" page with step-by-step instructions
 - HTTPS enforced in production; HTTP works on localhost
@@ -92,9 +93,10 @@ The app detects SSL certificates at `/app/ssl` at startup and serves HTTPS autom
 
 ```
 ├── app.py               # Flask application
+├── test_app.py          # Unit tests (unittest + mock)
 ├── templates/
 │   ├── index.html           # Search form
-│   ├── results.html         # List view
+│   ├── results.html         # List view (nested species/checklist)
 │   ├── how_it_works.html    # How it works page
 │   └── loc_not_found.html   # Error page
 ├── static/
@@ -107,6 +109,12 @@ The app detects SSL certificates at `/app/ssl` at startup and serves HTTPS autom
 ├── configs/
 │   └── keys.ini         # API keys (not committed)
 └── Dockerfile
+```
+
+## Running Tests
+
+```bash
+python -m unittest test_app -v
 ```
 
 ## API Endpoints
