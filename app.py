@@ -161,15 +161,18 @@ def _top_species_codes(index_obs, limit=50):
     return ordered[:limit]
 
 
-def _fetch_all_obs_for_species(species_code, lat, lng, dist, back, headers):
+def _fetch_all_obs_for_species(species_code, lat, lng, dist, back, headers, loc_id=None):
     """Fetch all recent checklist-level observations for one species. Returns [] on any error."""
-    key = (species_code, round(lat, 4), round(lng, 4), dist, back)
+    key = (species_code, loc_id, back) if loc_id else (species_code, round(lat, 4), round(lng, 4), dist, back)
     entry = _obs_cache.get(key)
     if entry and time.time() - entry[1] < _OBS_CACHE_TTL:
         return entry[0]
     try:
-        url = (f'https://api.ebird.org/v2/data/obs/geo/recent/{species_code}'
-               f'?lat={lat}&lng={lng}&dist={dist}&maxResults=10000&back={back}')
+        if loc_id:
+            url = f'https://api.ebird.org/v2/data/obs/{loc_id}/recent/{species_code}?back={back}&maxResults=10000'
+        else:
+            url = (f'https://api.ebird.org/v2/data/obs/geo/recent/{species_code}'
+                   f'?lat={lat}&lng={lng}&dist={dist}&maxResults=10000&back={back}')
         resp = requests.get(url, headers=headers, timeout=10)
         if resp.status_code == 429:
             time.sleep(1)
@@ -189,11 +192,25 @@ def results_from_coordinates(lat, lng, notable=False, species_code=None, dist=10
     if loc_id:
         if notable:
             url = f'https://api.ebird.org/v2/data/obs/{loc_id}/recent/notable?back={back}&maxResults=10000'
+            all_obs = requests.get(url, headers=headers, timeout=10).json()
         elif species_code:
             url = f'https://api.ebird.org/v2/data/obs/{loc_id}/recent/{species_code}?back={back}&maxResults=10000'
+            all_obs = requests.get(url, headers=headers, timeout=10).json()
         else:
-            url = f'https://api.ebird.org/v2/data/obs/{loc_id}/recent?back={back}&maxResults=10000'
-        all_obs = requests.get(url, headers=headers, timeout=10).json()
+            index_url = f'https://api.ebird.org/v2/data/obs/{loc_id}/recent?back={back}&maxResults=10000'
+            index_obs = requests.get(index_url, headers=headers, timeout=10).json()
+            species_codes = _top_species_codes(index_obs)
+            if species_codes:
+                all_obs = []
+                with ThreadPoolExecutor(max_workers=20) as executor:
+                    futures = {
+                        executor.submit(_fetch_all_obs_for_species, code, lat, lng, dist, back, headers, loc_id): code
+                        for code in species_codes
+                    }
+                    for future in as_completed(futures):
+                        all_obs.extend(future.result())
+            else:
+                all_obs = index_obs
     elif species_code:
         url = f"https://api.ebird.org/v2/data/obs/geo/recent/{species_code}?lat={lat}&lng={lng}&dist={dist}&maxResults=10000&back={back}"
         all_obs = requests.get(url, headers=headers, timeout=10).json()
@@ -473,11 +490,25 @@ def get_species_sightings_at_coordinates(coordinates, notable=False, species_cod
     if loc_id:
         if species_code:
             url = f'https://api.ebird.org/v2/data/obs/{loc_id}/recent/{species_code}?back={back}&maxResults=10000'
+            all_obs = requests.get(url, headers=headers, timeout=10).json()
         elif notable:
             url = f'https://api.ebird.org/v2/data/obs/{loc_id}/recent/notable?back={back}&maxResults=10000'
+            all_obs = requests.get(url, headers=headers, timeout=10).json()
         else:
-            url = f'https://api.ebird.org/v2/data/obs/{loc_id}/recent?back={back}&maxResults=10000'
-        all_obs = requests.get(url, headers=headers, timeout=10).json()
+            index_url = f'https://api.ebird.org/v2/data/obs/{loc_id}/recent?back={back}&maxResults=10000'
+            index_obs = requests.get(index_url, headers=headers, timeout=10).json()
+            species_codes = _top_species_codes(index_obs)
+            if species_codes:
+                all_obs = []
+                with ThreadPoolExecutor(max_workers=20) as executor:
+                    futures = {
+                        executor.submit(_fetch_all_obs_for_species, code, center_lat, center_lng, dist, back, headers, loc_id): code
+                        for code in species_codes
+                    }
+                    for future in as_completed(futures):
+                        all_obs.extend(future.result())
+            else:
+                all_obs = index_obs
     elif species_code:
         url = f"https://api.ebird.org/v2/data/obs/geo/recent/{species_code}?lat={center_lat}&lng={center_lng}&dist={dist}&maxResults=10000&back={back}"
         all_obs = requests.get(url, headers=headers, timeout=10).json()
