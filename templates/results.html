@@ -391,16 +391,7 @@
             var idx = srow.dataset.idx;
             var checklistRows = document.querySelectorAll('.checklist-row[data-idx="' + idx + '"]');
 
-            var nameMatch = !q || srow.dataset.name.toLowerCase().includes(q);
-            var locMatch = false;
-            if (!nameMatch && q) {
-                checklistRows.forEach(function(cr) {
-                    var loc = cr.querySelector('.ci-loc');
-                    if (loc && loc.textContent.toLowerCase().includes(q)) locMatch = true;
-                });
-            }
-
-            var show = nameMatch || locMatch;
+            var show = !q || srow.dataset.name.toLowerCase().includes(q);
             srow.style.display = show ? '' : 'none';
 
             checklistRows.forEach(function(cr) {
