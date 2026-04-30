@@ -12,6 +12,9 @@ import pandas as pd
 
 app = Flask(__name__)
 
+_obs_cache: dict = {}
+_OBS_CACHE_TTL = 300  # seconds
+
 
 def format_obs_date(obs_dt):
     if not obs_dt:
@@ -149,6 +152,10 @@ def coordinates_to_location(latitude, longitude):
 
 def _fetch_all_obs_for_species(species_code, lat, lng, dist, back, headers):
     """Fetch all recent checklist-level observations for one species. Returns [] on any error."""
+    key = (species_code, round(lat, 4), round(lng, 4), dist, back)
+    entry = _obs_cache.get(key)
+    if entry and time.time() - entry[1] < _OBS_CACHE_TTL:
+        return entry[0]
     try:
         url = (f'https://api.ebird.org/v2/data/obs/geo/recent/{species_code}'
                f'?lat={lat}&lng={lng}&dist={dist}&maxResults=10000&back={back}')
@@ -157,7 +164,9 @@ def _fetch_all_obs_for_species(species_code, lat, lng, dist, back, headers):
             time.sleep(1)
             resp = requests.get(url, headers=headers, timeout=10)
         result = resp.json()
-        return result if isinstance(result, list) else []
+        result = result if isinstance(result, list) else []
+        _obs_cache[key] = (result, time.time())
+        return result
     except Exception:
         return []
 
