@@ -377,7 +377,9 @@
         var wasExpanded = row.classList.contains('expanded');
         row.classList.toggle('expanded');
         document.querySelectorAll('.checklist-row[data-idx="' + idx + '"]').forEach(function(r) {
-            r.classList.toggle('visible', !wasExpanded);
+            var showing = !wasExpanded;
+            r.classList.toggle('visible', showing);
+            r.style.display = showing ? '' : 'none';
         });
     }
 

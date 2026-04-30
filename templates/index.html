@@ -320,7 +320,7 @@
                 </button>
             </div>
 
-            <div class="form-group" id="hotspot-group" style="display:none;">
+            <div class="form-group" id="hotspot-group">
                 <label for="hotspot-select">Nearby Hotspot (optional)</label>
                 <select id="hotspot-select" name="loc_id">
                     <option value="">All locations in area</option>
@@ -489,30 +489,29 @@
         var locId   = p.get('loc_id');
         var locName = p.get('loc_name');
         var distVal = dist || 10;
-        var grp  = document.getElementById('hotspot-group');
         var sel  = document.getElementById('hotspot-select');
         var hint = document.getElementById('hotspot-hint');
 
         if (locId) {
             document.getElementById('loc_name').value = locName || '';
-            grp.style.display = 'block';
-            hint.textContent = 'Loading hotspots…';
-            fetch('/api/hotspots?location=' + encodeURIComponent(loc) + '&dist=' + distVal)
-                .then(function(r) { return r.json(); })
-                .then(function(hs) {
-                    sel.innerHTML = '<option value="">All locations in area</option>';
-                    hs.forEach(function(h) {
-                        var o = document.createElement('option');
-                        o.value = h.locId;
-                        o.dataset.name = h.locName;
-                        o.textContent = h.locName + (h.numSpecies ? ' (' + h.numSpecies + ' species)' : '');
-                        if (h.locId === locId) o.selected = true;
-                        sel.appendChild(o);
-                    });
-                    hint.textContent = hs.length + ' hotspot' + (hs.length !== 1 ? 's' : '') + ' found';
-                })
-                .catch(function() { hint.textContent = ''; });
         }
+
+        hint.textContent = 'Loading hotspots…';
+        fetch('/api/hotspots?location=' + encodeURIComponent(loc) + '&dist=' + distVal)
+            .then(function(r) { return r.json(); })
+            .then(function(hs) {
+                sel.innerHTML = '<option value="">All locations in area</option>';
+                hs.forEach(function(h) {
+                    var o = document.createElement('option');
+                    o.value = h.locId;
+                    o.dataset.name = h.locName;
+                    o.textContent = h.locName + (h.numSpecies ? ' (' + h.numSpecies + ' species)' : '');
+                    if (h.locId === locId) o.selected = true;
+                    sel.appendChild(o);
+                });
+                hint.textContent = hs.length + ' hotspot' + (hs.length !== 1 ? 's' : '') + ' found';
+            })
+            .catch(function() { hint.textContent = ''; });
     })();
 </script>
 </body>
