@@ -150,6 +150,17 @@ def coordinates_to_location(latitude, longitude):
     return None
 
 
+def _top_species_codes(index_obs, limit=50):
+    """Return up to `limit` species codes from an index response, ordered most-recent first."""
+    seen, ordered = set(), []
+    for obs in sorted(index_obs, key=lambda o: o.get('obsDt', ''), reverse=True):
+        code = obs.get('speciesCode')
+        if code and code not in seen:
+            seen.add(code)
+            ordered.append(code)
+    return ordered[:limit]
+
+
 def _fetch_all_obs_for_species(species_code, lat, lng, dist, back, headers):
     """Fetch all recent checklist-level observations for one species. Returns [] on any error."""
     key = (species_code, round(lat, 4), round(lng, 4), dist, back)
@@ -196,7 +207,7 @@ def results_from_coordinates(lat, lng, notable=False, species_code=None, dist=10
             index_url = (f'https://api.ebird.org/v2/data/obs/geo/recent'
                          f'?lat={lat}&lng={lng}&dist={dist}&maxResults=10000&back={back}')
         index_obs = requests.get(index_url, headers=headers, timeout=10).json()
-        species_codes = list({obs['speciesCode'] for obs in index_obs if obs.get('speciesCode')})
+        species_codes = _top_species_codes(index_obs)
         if species_codes:
             all_obs = []
             with ThreadPoolExecutor(max_workers=20) as executor:
@@ -478,7 +489,7 @@ def get_species_sightings_at_coordinates(coordinates, notable=False, species_cod
             index_url = (f'https://api.ebird.org/v2/data/obs/geo/recent'
                          f'?lat={center_lat}&lng={center_lng}&dist={dist}&maxResults=10000&back={back}')
         index_obs = requests.get(index_url, headers=headers, timeout=10).json()
-        species_codes = list({obs['speciesCode'] for obs in index_obs if obs.get('speciesCode')})
+        species_codes = _top_species_codes(index_obs)
         if species_codes:
             all_obs = []
             with ThreadPoolExecutor(max_workers=20) as executor:
