@@ -333,57 +333,58 @@ def create_map_with_pins(locations, center_location):
 @app.route('/map')
 def map_endpoint():
     location = request.args.get('location')
-    coords = location_to_coordinates(location)
-    if not coords:
-        return render_template('loc_not_found.html', location=location)
-    lat, lng = coords
-    center_coordinates = (lat, lng)
-    dist = int(request.args.get('dist', 10))
-    back = int(request.args.get('back', 7))
+    try:
+        coords = location_to_coordinates(location)
+        if not coords:
+            return render_template('loc_not_found.html', location=location)
+        lat, lng = coords
+        center_coordinates = (lat, lng)
+        dist = int(request.args.get('dist', 10))
+        back = int(request.args.get('back', 7))
 
-    notable = request.args.get('notable') == 'on'
-    species_name = request.args.get('species_name') or None
-    species_code = species_name_to_code(species_name) if species_name else None
-    loc_id = request.args.get('loc_id') or None
-    loc_name = request.args.get('loc_name') or None
+        notable = request.args.get('notable') == 'on'
+        species_name = request.args.get('species_name') or None
+        species_code = species_name_to_code(species_name) if species_name else None
+        loc_id = request.args.get('loc_id') or None
+        loc_name = request.args.get('loc_name') or None
 
-    sighting_coordinates = get_species_sightings_at_coordinates(center_coordinates, notable, species_code, dist, back, loc_id)
+        sighting_coordinates = get_species_sightings_at_coordinates(center_coordinates, notable, species_code, dist, back, loc_id)
 
-    if notable and species_code:
-        map_title = f'Map of recent sightings of notable {species_name}s'
-    elif notable:
-        map_title = 'Map of recent sightings of notable species'
-    elif species_code:
-        map_title = f'Map of recent sightings of {species_name}s'
-    else:
-        map_title = 'Map of recent sightings of all species'
+        if notable and species_code:
+            map_title = f'Map of recent sightings of notable {species_name}s'
+        elif notable:
+            map_title = 'Map of recent sightings of notable species'
+        elif species_code:
+            map_title = f'Map of recent sightings of {species_name}s'
+        else:
+            map_title = 'Map of recent sightings of all species'
 
-    params = {'location': location, 'dist': dist, 'back': back}
-    if species_name:
-        params['species_name'] = species_name
-    if notable:
-        params['notable'] = 'on'
-    if loc_id:
-        params['loc_id'] = loc_id
-    if loc_name:
-        params['loc_name'] = loc_name
-    list_url = '/results?' + urlencode(params)
-    search_url = '/?' + urlencode(params)
+        params = {'location': location, 'dist': dist, 'back': back}
+        if species_name:
+            params['species_name'] = species_name
+        if notable:
+            params['notable'] = 'on'
+        if loc_id:
+            params['loc_id'] = loc_id
+        if loc_name:
+            params['loc_name'] = loc_name
+        list_url = '/results?' + urlencode(params)
+        search_url = '/?' + urlencode(params)
 
-    totals = {}
-    for s in sighting_coordinates:
-        if s[4] is not None:
-            totals[s[2]] = (totals.get(s[2]) or 0) + s[4]
-        elif s[2] not in totals:
-            totals[s[2]] = None
-    species_summary = sorted(totals.items(), key=lambda x: (x[1] is None, -(x[1] or 0)))
+        totals = {}
+        for s in sighting_coordinates:
+            if s[4] is not None:
+                totals[s[2]] = (totals.get(s[2]) or 0) + s[4]
+            elif s[2] not in totals:
+                totals[s[2]] = None
+        species_summary = sorted(totals.items(), key=lambda x: (x[1] is None, -(x[1] or 0)))
 
-    map_obj = create_map_with_pins(sighting_coordinates, center_coordinates)
+        map_obj = create_map_with_pins(sighting_coordinates, center_coordinates)
 
-    btn_style = ('display:inline-block; background:#c8881a; color:white; padding:7px 12px; '
-                 'border-radius:6px; text-decoration:none; font-family:Arial,sans-serif; '
-                 'font-size:13px; font-weight:bold; white-space:nowrap; flex-shrink:0;')
-    nav_html = f'''
+        btn_style = ('display:inline-block; background:#c8881a; color:white; padding:7px 12px; '
+                     'border-radius:6px; text-decoration:none; font-family:Arial,sans-serif; '
+                     'font-size:13px; font-weight:bold; white-space:nowrap; flex-shrink:0;')
+        nav_html = f'''
     <style>
         #map-header {{
             position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
@@ -412,58 +413,58 @@ def map_endpoint():
         <span id="map-header-title">{map_title}</span>
         <a href="{list_url}" style="{btn_style}">List View</a>
     </div>'''
-    map_obj.get_root().html.add_child(folium.Element(nav_html))
+        map_obj.get_root().html.add_child(folium.Element(nav_html))
 
-    map_var = map_obj.get_name()
-    filter_js = (
-        '<script>window.addEventListener("load",function(){'
-        'var lmap=window["' + map_var + '"];'
-        'if(!lmap)return;'
-        'var active=null;'
-        'window.filterSpecies=function(name){'
-        'var rows=document.querySelectorAll("#map-summary [data-species]");'
-        'var pins=document.querySelectorAll(".leaflet-marker-pane [data-species]");'
-        'if(active===name){'
-        'active=null;'
-        'pins.forEach(function(el){var p=el.querySelector("path");if(p)p.setAttribute("fill","#c8881a");});'
-        'rows.forEach(function(r){r.style.background="";r.style.fontWeight="";r.style.color="";});'
-        '}else{'
-        'active=name;'
-        'pins.forEach(function(el){'
-        'var p=el.querySelector("path");'
-        'if(p)p.setAttribute("fill",el.dataset.species===name?"#c0522a":"#c8881a");'
-        '});'
-        'rows.forEach(function(r){'
-        'var on=r.dataset.species===name;'
-        'r.style.background=on?"rgba(200,136,26,0.15)":"";'
-        'r.style.fontWeight=on?"bold":"";'
-        'r.style.color=on?"#a86f10":"";'
-        '});'
-        'var b=[];'
-        'lmap.eachLayer(function(l){'
-        'if(!l._icon)return;'
-        'var el=l._icon.querySelector("[data-species]");'
-        'if(el&&el.dataset.species===name)b.push(l.getLatLng());'
-        '});'
-        'if(b.length)lmap.fitBounds(L.latLngBounds(b),{padding:[50,50],maxZoom:14});'
-        '}'
-        '};'
-        '});'
-        '</script>'
-    )
-    map_obj.get_root().html.add_child(folium.Element(filter_js))
+        map_var = map_obj.get_name()
+        filter_js = (
+            '<script>window.addEventListener("load",function(){'
+            'var lmap=window["' + map_var + '"];'
+            'if(!lmap)return;'
+            'var active=null;'
+            'window.filterSpecies=function(name){'
+            'var rows=document.querySelectorAll("#map-summary [data-species]");'
+            'var pins=document.querySelectorAll(".leaflet-marker-pane [data-species]");'
+            'if(active===name){'
+            'active=null;'
+            'pins.forEach(function(el){var p=el.querySelector("path");if(p)p.setAttribute("fill","#c8881a");});'
+            'rows.forEach(function(r){r.style.background="";r.style.fontWeight="";r.style.color="";});'
+            '}else{'
+            'active=name;'
+            'pins.forEach(function(el){'
+            'var p=el.querySelector("path");'
+            'if(p)p.setAttribute("fill",el.dataset.species===name?"#c0522a":"#c8881a");'
+            '});'
+            'rows.forEach(function(r){'
+            'var on=r.dataset.species===name;'
+            'r.style.background=on?"rgba(200,136,26,0.15)":"";'
+            'r.style.fontWeight=on?"bold":"";'
+            'r.style.color=on?"#a86f10":"";'
+            '});'
+            'var b=[];'
+            'lmap.eachLayer(function(l){'
+            'if(!l._icon)return;'
+            'var el=l._icon.querySelector("[data-species]");'
+            'if(el&&el.dataset.species===name)b.push(l.getLatLng());'
+            '});'
+            'if(b.length)lmap.fitBounds(L.latLngBounds(b),{padding:[50,50],maxZoom:14});'
+            '}'
+            '};'
+            '});'
+            '</script>'
+        )
+        map_obj.get_root().html.add_child(folium.Element(filter_js))
 
-    rows = ''.join(
-        f'<div data-species="{name}" onclick="filterSpecies(this.dataset.species)"'
-        f' style="display:flex;justify-content:space-between;align-items:center;'
-        f'padding:5px 4px;border-bottom:1px solid #eee;cursor:pointer;border-radius:4px;transition:background 0.12s;">'
-        f'<span style="font-size:13px;font-family:Arial,sans-serif;">{name}</span>'
-        f'<span style="background:#c8881a;color:white;border-radius:10px;padding:1px 8px;'
-        f'font-size:12px;font-weight:bold;margin-left:8px;white-space:nowrap;">{"—" if count is None else count}</span>'
-        f'</div>'
-        for name, count in species_summary
-    )
-    summary_html = f'''
+        rows = ''.join(
+            f'<div data-species="{name}" onclick="filterSpecies(this.dataset.species)"'
+            f' style="display:flex;justify-content:space-between;align-items:center;'
+            f'padding:5px 4px;border-bottom:1px solid #eee;cursor:pointer;border-radius:4px;transition:background 0.12s;">'
+            f'<span style="font-size:13px;font-family:Arial,sans-serif;">{name}</span>'
+            f'<span style="background:#c8881a;color:white;border-radius:10px;padding:1px 8px;'
+            f'font-size:12px;font-weight:bold;margin-left:8px;white-space:nowrap;">{"—" if count is None else count}</span>'
+            f'</div>'
+            for name, count in species_summary
+        )
+        summary_html = f'''
     <div id="map-summary" style="position:fixed; bottom:30px; left:16px; z-index:1000; background:white;
          border-radius:8px; box-shadow:0 2px 10px rgba(0,0,0,0.25); width:260px; max-height:280px;
          display:flex; flex-direction:column; overflow:hidden;">
@@ -474,9 +475,11 @@ def map_endpoint():
         </div>
         <div style="overflow-y:auto; padding:4px 12px;">{rows}</div>
     </div>'''
-    map_obj.get_root().html.add_child(folium.Element(summary_html))
+        map_obj.get_root().html.add_child(folium.Element(summary_html))
 
-    return render_template_string(map_obj.get_root().render())
+        return render_template_string(map_obj.get_root().render())
+    except Exception:
+        return render_template('loc_not_found.html', location=location)
 
 
 def species_name_to_code(species_name):
