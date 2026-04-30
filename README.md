@@ -122,9 +122,21 @@ python -m unittest test_app -v
 | Endpoint | Description |
 |----------|-------------|
 | `GET /` | Main search page |
-| `GET /results?location=&species_name=&notable=&dist=&back=&hotspot=` | Sightings list |
-| `GET /map?location=&species_name=&notable=&dist=&back=&hotspot=` | Interactive map |
+| `GET /results?location=&species_name=&notable=&dist=&back=&loc_id=&loc_name=` | Sightings list |
+| `GET /map?location=&species_name=&notable=&dist=&back=&loc_id=&loc_name=` | Interactive map |
 | `GET /how-it-works` | How it works page |
 | `GET /api/species` | JSON list of all species names (for autocomplete) |
 | `GET /location?lat=&long=` | Reverse geocode coordinates to a place name |
 | `GET /api/hotspots?lat=&lng=&dist=` | Nearby eBird hotspots for a given coordinate |
+
+### Query parameters for `/results` and `/map`
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `location` | — | Place name, address, or GPS coordinates |
+| `dist` | `10` | Search radius in km (1–50) |
+| `back` | `7` | Days back to search (1–30) |
+| `species_name` | — | Filter to a single species (common name) |
+| `notable` | — | Set to `on` to show only notable/rare sightings |
+| `loc_id` | — | eBird location ID to restrict to one hotspot |
+| `loc_name` | — | Display name for the selected hotspot |
