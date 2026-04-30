@@ -1,5 +1,6 @@
 import configparser
 import os
+import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from urllib.parse import urlencode
@@ -151,7 +152,11 @@ def _fetch_all_obs_for_species(species_code, lat, lng, dist, back, headers):
     try:
         url = (f'https://api.ebird.org/v2/data/obs/geo/recent/{species_code}'
                f'?lat={lat}&lng={lng}&dist={dist}&maxResults=10000&back={back}')
-        result = requests.get(url, headers=headers, timeout=10).json()
+        resp = requests.get(url, headers=headers, timeout=10)
+        if resp.status_code == 429:
+            time.sleep(1)
+            resp = requests.get(url, headers=headers, timeout=10)
+        result = resp.json()
         return result if isinstance(result, list) else []
     except Exception:
         return []
