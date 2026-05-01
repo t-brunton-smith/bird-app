@@ -288,5 +288,20 @@ class TestMapFunction(unittest.TestCase):
         self.assertEqual(result, [], "Non-list API response must return empty list, not dict")
 
 
+class TestMapRendering(unittest.TestCase):
+    def test_pins_render_with_clustering(self):
+        """Markers added to a MarkerCluster should appear in the rendered map HTML."""
+        fake_locations = [
+            (40.78, -73.96, 'American Robin', 'Apr 20, 2026', 3, 'S111'),
+            (40.66, -73.97, 'Dark-eyed Junco', 'Apr 18, 2026', 2, 'S222'),
+        ]
+        map_obj = ebird_app.create_map_with_pins(fake_locations, (40.71, -74.00))
+        html = map_obj.get_root().render()
+        # Folium JSON-encodes marker HTML, so data-species appears as data-species=\\"name\\"
+        self.assertIn('data-species=\\"American Robin\\"', html)
+        self.assertIn('data-species=\\"Dark-eyed Junco\\"', html)
+        self.assertIn('markerClusterGroup', html)
+
+
 if __name__ == '__main__':
     unittest.main()
