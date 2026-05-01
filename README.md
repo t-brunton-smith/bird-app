@@ -10,8 +10,8 @@ A Flask web app for browsing recent bird sightings near any location, powered by
 - Filter for notable/rare sightings only
 - Set search radius (up to 50 km) and lookback window (up to 30 days); defaults are 10 km and 7 days
 - Narrow results to a specific eBird hotspot near your location
-- **List view:** species grouped with all individual checklists nested beneath; sortable and filterable; links to eBird checklists; click a species to expand/collapse its checklists
-- **Map view:** interactive Folium/Leaflet map with one pin per checklist observation; click a species in the summary panel to highlight its pins and dim others
+- **List view:** species grouped with all individual checklists nested beneath; sortable and filterable; links to eBird checklists; click a species to expand/collapse its checklists; per-species activity sparkline shows smoothed daily max count across the lookback window, with a dot marking today
+- **Map view:** interactive Folium/Leaflet map with clustered pins per species; click a species in the summary panel to show only that species' pins; "Expand Pins" toggle switches to individual circle markers for every sighting
 - Results cover all location types — hotspots, personal locations, and private locations — not just eBird hotspots
 - Search parameters preserved in the URL so "← Search" restores the form exactly
 - "How it works" page with step-by-step instructions
