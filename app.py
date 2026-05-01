@@ -309,7 +309,11 @@ def results_from_coordinates(lat, lng, notable=False, species_code=None, dist=10
         daily: dict = {}
         for r in records:
             d = r['raw_dt'][:10]
-            daily[d] = daily.get(d, 0) + 1
+            count = r['how_many']
+            if count is not None:
+                daily[d] = max(daily.get(d, 0), count)
+            elif d not in daily:
+                daily[d] = 0  # seen but count unknown — show hairline
         spark_counts = [daily.get(d, 0) for d in day_keys]
         species_data.append({
             'name': name,
