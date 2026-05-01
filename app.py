@@ -3,7 +3,7 @@ import json
 import os
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from datetime import datetime
+from datetime import date, datetime, timedelta
 from urllib.parse import urlencode
 
 import folium as folium
@@ -16,6 +16,27 @@ app = Flask(__name__)
 
 _obs_cache: dict = {}
 _OBS_CACHE_TTL = 300  # seconds
+
+
+def _make_sparkline_svg(counts, width=80, height=20):
+    if not counts:
+        return ''
+    mx = max(counts)
+    n = len(counts)
+    slot = width / n
+    bar_w = max(1.5, slot * 0.72)
+    bars = []
+    for i, c in enumerate(counts):
+        x = i * slot + (slot - bar_w) / 2
+        if mx > 0 and c > 0:
+            h = max(2, round(c / mx * (height - 2)))
+            fill = '#c8881a'
+        else:
+            h = 1
+            fill = '#d0c8be'
+        y = height - h
+        bars.append(f'<rect x="{x:.1f}" y="{y}" width="{bar_w:.1f}" height="{h}" fill="{fill}" rx="0.5"/>')
+    return f'<svg width="{width}" height="{height}" style="vertical-align:middle;overflow:visible;">{"".join(bars)}</svg>'
 
 
 def format_obs_date(obs_dt):
@@ -277,17 +298,26 @@ def results_from_coordinates(lat, lng, notable=False, species_code=None, dist=10
             order.append(name)
         groups[name]['records'].append(record)
 
+    today = date.today()
+    day_keys = [(today - timedelta(days=i)).isoformat() for i in range(back - 1, -1, -1)]
+
     species_data = []
     for name in order:
         records = sorted(groups[name]['records'], key=lambda r: r['raw_dt'], reverse=True)
         known = [r['how_many'] for r in records if r['how_many'] is not None]
         total = sum(known) if known else None
+        daily: dict = {}
+        for r in records:
+            d = r['raw_dt'][:10]
+            daily[d] = daily.get(d, 0) + 1
+        spark_counts = [daily.get(d, 0) for d in day_keys]
         species_data.append({
             'name': name,
             'species_code': groups[name]['species_code'],
             'total': total,
             'latest_dt': records[0]['raw_dt'] if records else '',
             'records': records,
+            'spark_svg': _make_sparkline_svg(spark_counts),
         })
 
     species_data.sort(key=lambda s: (s['total'] is None, -(s['total'] or 0)))

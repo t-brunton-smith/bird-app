@@ -124,6 +124,8 @@ class TestGroupingLogic(unittest.TestCase):
                          f"Expected total=8, got {robin['total']}")
         self.assertEqual(robin['records'][0]['raw_dt'], '2026-04-20 08:00')
         self.assertEqual(robin['records'][1]['raw_dt'], '2026-04-18 07:30')
+        self.assertIn('spark_svg', robin)
+        self.assertTrue(robin['spark_svg'].startswith('<svg'))
 
     @patch('app.render_template')
     @patch('app.requests.get')
