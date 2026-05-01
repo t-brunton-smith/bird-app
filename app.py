@@ -6,6 +6,7 @@ from datetime import datetime
 from urllib.parse import urlencode
 
 import folium as folium
+from folium.plugins import MarkerCluster
 import requests
 from flask import Flask, render_template, render_template_string, request, jsonify, redirect, make_response
 import pandas as pd
@@ -327,6 +328,8 @@ def create_map_with_pins(locations, center_location):
 
     folium.Marker(location=[center_location[0], center_location[1]],
                   icon=folium.Icon(icon='map-marker', color='red')).add_to(map_obj)
+
+    cluster = MarkerCluster(name='Sightings').add_to(map_obj)
     for (lat, lng, comName, obsDt, howMany, subId) in locations:
         checklist = (f'<a href="https://ebird.org/checklist/{subId}" target="_blank" '
                      f'style="color:#c8881a;">View checklist ↗</a>') if subId else ''
@@ -346,7 +349,7 @@ def create_map_with_pins(locations, center_location):
         folium.Marker(location=[lat, lng],
                       icon=folium.DivIcon(html=icon_html, icon_size=(18, 26),
                                           icon_anchor=(9, 26), popup_anchor=(0, -26)),
-                      popup=folium.Popup(popup_html, max_width=220)).add_to(map_obj)
+                      popup=folium.Popup(popup_html, max_width=220)).add_to(cluster)
 
     return map_obj
 
