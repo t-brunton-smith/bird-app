@@ -317,12 +317,13 @@ def results_from_coordinates(lat, lng, notable=False, species_code=None, dist=10
 
 
 def create_map_with_pins(locations, center_location):
-    map_obj = folium.Map(location=[center_location[0], center_location[1]], zoom_start=10, control_scale=True)
+    map_obj = folium.Map(location=[center_location[0], center_location[1]], zoom_start=10, control_scale=True, tiles=None)
 
-    tile_url = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
-    attribution = 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
-
-    folium.TileLayer(tiles=tile_url, attr=attribution, API_key=_STADIA_TOKEN).add_to(map_obj)
+    satellite_url = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+    satellite_attr = 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+    folium.TileLayer(tiles=satellite_url, attr=satellite_attr, name='Satellite', show=True).add_to(map_obj)
+    folium.TileLayer('OpenStreetMap', name='Street Map', show=False).add_to(map_obj)
+    folium.LayerControl(position='topright', collapsed=False).add_to(map_obj)
 
     folium.Marker(location=[center_location[0], center_location[1]],
                   icon=folium.Icon(icon='map-marker', color='red')).add_to(map_obj)
