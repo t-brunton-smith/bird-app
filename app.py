@@ -463,6 +463,11 @@ def map_endpoint():
 
         map_obj, species_cluster_vars = create_map_with_pins(sighting_coordinates, center_coordinates)
 
+        obs_json = json.dumps([
+            {'lat': s[0], 'lng': s[1], 'species': s[2], 'date': s[3], 'count': s[4], 'subId': s[5]}
+            for s in sighting_coordinates
+        ])
+
         btn_style = ('display:inline-block; background:#c8881a; color:white; padding:7px 12px; '
                      'border-radius:6px; text-decoration:none; font-family:Arial,sans-serif; '
                      'font-size:13px; font-weight:bold; white-space:nowrap; flex-shrink:0;')
@@ -481,9 +486,17 @@ def map_endpoint():
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }}
         .leaflet-top {{ top: 52px !important; }}
+        #expand-btn {{
+            display: inline-block; background: transparent; color: white;
+            padding: 7px 12px; border-radius: 6px;
+            border: 1px solid rgba(255,255,255,0.5);
+            font-family: Arial, sans-serif; font-size: 13px; font-weight: bold;
+            cursor: pointer; white-space: nowrap; flex-shrink: 0;
+            transition: background 0.15s, border-color 0.15s;
+        }}
         @media (max-width: 640px) {{
             #map-header {{ padding: 8px 10px; gap: 6px; }}
-            #map-header a {{ padding: 5px 9px !important; font-size: 12px !important; }}
+            #map-header a, #expand-btn {{ padding: 5px 9px !important; font-size: 12px !important; }}
             #map-header-title {{ font-size: 11px; }}
             .leaflet-top {{ top: 46px !important; }}
             #map-summary {{ width: calc(100vw - 16px) !important; left: 8px !important;
@@ -493,6 +506,7 @@ def map_endpoint():
     <div id="map-header">
         <a href="{search_url}" style="{btn_style}">&#8592; Search</a>
         <span id="map-header-title">{map_title}</span>
+        <button id="expand-btn" onclick="toggleExpand()">Expand Pins</button>
         <a href="{list_url}" style="{btn_style}">List View</a>
     </div>'''
         map_obj.get_root().html.add_child(folium.Element(nav_html))
@@ -504,30 +518,100 @@ def map_endpoint():
             'var lmap=window["' + map_var + '"];'
             'if(!lmap)return;'
             'var active=null;'
+            'var isExpanded=false;'
+            'var expandedGroups={};'
             'var clusterMap=' + cluster_map_json + ';'
-            'window.filterSpecies=function(name){'
-            'var rows=document.querySelectorAll("#map-summary [data-species]");'
-            'if(active===name){'
-            'active=null;'
-            'Object.values(clusterMap).forEach(function(v){'
-            'var c=window[v];if(c&&!lmap.hasLayer(c))lmap.addLayer(c);'
+            'var obsData=' + obs_json + ';'
+
+            'function buildExpandedGroups(){'
+            'if(Object.keys(expandedGroups).length>0)return;'
+            'obsData.forEach(function(o){'
+            'if(!expandedGroups[o.species])expandedGroups[o.species]=L.layerGroup();'
+            'var pop=\'<div style="font-family:Arial,sans-serif;font-size:13px;min-width:160px;">\''
+            '+\'<strong style="font-size:14px;display:block;margin-bottom:4px;">\'+o.species+\'</strong>\''
+            '+\'<span style="color:#666;">\'+o.date+\'</span>\''
+            '+(o.count?\'<br>Count: \'+o.count:\'\')'
+            '+(o.subId?\'<br><a href="https://ebird.org/checklist/\'+o.subId+\'" target="_blank" style="color:#c8881a;">View checklist ↗</a>\':\'\')'
+            '+\'</div>\';'
+            'L.circleMarker([o.lat,o.lng],{radius:6,fillColor:\'#c8881a\',color:\'#a86f10\',weight:1.5,fillOpacity:0.85})'
+            '.bindPopup(pop,{maxWidth:220})'
+            '.addTo(expandedGroups[o.species]);'
             '});'
-            'rows.forEach(function(r){r.style.background="";r.style.fontWeight="";r.style.color="";});'
+            '}'
+
+            'function applyExpandedFilter(name){'
+            'Object.keys(expandedGroups).forEach(function(s){'
+            'var g=expandedGroups[s];'
+            'if(name===null||s===name){'
+            'if(!lmap.hasLayer(g))lmap.addLayer(g);'
+            'var fc=\'#c8881a\';'
+            'var bc=\'#a86f10\';'
+            'g.eachLayer(function(m){m.setStyle({fillColor:fc,color:bc});});'
+            '}else{if(lmap.hasLayer(g))lmap.removeLayer(g);}'
+            '});'
+            '}'
+
+            'window.toggleExpand=function(){'
+            'var btn=document.getElementById(\'expand-btn\');'
+            'isExpanded=!isExpanded;'
+            'if(isExpanded){'
+            'Object.values(clusterMap).forEach(function(v){'
+            'var c=window[v];if(c&&lmap.hasLayer(c))lmap.removeLayer(c);'
+            '});'
+            'buildExpandedGroups();'
+            'applyExpandedFilter(active);'
+            'btn.textContent=\'Collapse Pins\';'
+            'btn.style.background=\'rgba(200,136,26,0.35)\';'
+            'btn.style.borderColor=\'#c8881a\';'
             '}else{'
-            'active=name;'
+            'Object.keys(expandedGroups).forEach(function(s){'
+            'var g=expandedGroups[s];if(lmap.hasLayer(g))lmap.removeLayer(g);'
+            '});'
             'Object.keys(clusterMap).forEach(function(s){'
             'var c=window[clusterMap[s]];if(!c)return;'
-            'if(s===name){if(!lmap.hasLayer(c))lmap.addLayer(c);}else{if(lmap.hasLayer(c))lmap.removeLayer(c);}'
+            'if(active===null||s===active){if(!lmap.hasLayer(c))lmap.addLayer(c);}'
             '});'
+            'btn.textContent=\'Expand Pins\';'
+            'btn.style.background=\'\';'
+            'btn.style.borderColor=\'rgba(255,255,255,0.5)\';'
+            '}'
+            '};'
+
+            'function updateRows(name){'
+            'var rows=document.querySelectorAll("#map-summary [data-species]");'
             'rows.forEach(function(r){'
             'var on=r.dataset.species===name;'
             'r.style.background=on?"rgba(200,136,26,0.15)":"";'
             'r.style.fontWeight=on?"bold":"";'
             'r.style.color=on?"#a86f10":"";'
             '});'
-            'var c=window[clusterMap[name]];'
-            'if(c){var b=[];c.eachLayer(function(l){if(l.getLatLng)b.push(l.getLatLng());});'
-            'if(b.length)lmap.fitBounds(L.latLngBounds(b),{padding:[50,50],maxZoom:14});}'
+            '}'
+
+            'window.filterSpecies=function(name){'
+            'if(active===name){'
+            'active=null;'
+            'if(isExpanded){applyExpandedFilter(null);}else{'
+            'Object.values(clusterMap).forEach(function(v){'
+            'var c=window[v];if(c&&!lmap.hasLayer(c))lmap.addLayer(c);'
+            '});}'
+            'updateRows(null);'
+            '}else{'
+            'active=name;'
+            'if(isExpanded){'
+            'applyExpandedFilter(name);'
+            'var eg=expandedGroups[name];'
+            'if(eg){var eb=[];eg.eachLayer(function(l){if(l.getLatLng)eb.push(l.getLatLng());});'
+            'if(eb.length)lmap.fitBounds(L.latLngBounds(eb),{padding:[50,50],maxZoom:14});}'
+            '}else{'
+            'Object.keys(clusterMap).forEach(function(s){'
+            'var c=window[clusterMap[s]];if(!c)return;'
+            'if(s===name){if(!lmap.hasLayer(c))lmap.addLayer(c);}else{if(lmap.hasLayer(c))lmap.removeLayer(c);}'
+            '});'
+            'var cc=window[clusterMap[name]];'
+            'if(cc){var cb=[];cc.eachLayer(function(l){if(l.getLatLng)cb.push(l.getLatLng());});'
+            'if(cb.length)lmap.fitBounds(L.latLngBounds(cb),{padding:[50,50],maxZoom:14});}'
+            '}'
+            'updateRows(name);'
             '}'
             '};'
             '});'
