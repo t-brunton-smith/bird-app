@@ -315,8 +315,10 @@
 
 {% if species_data %}
 <div class="filter-bar">
-    <input type="text" id="filter-input" placeholder="Filter by species or location…"
+    <input type="text" id="filter-input" placeholder="Filter by species…"
            oninput="filterTable(this.value)">
+    <button class="btn btn-outline" onclick="expandAll()">Expand all</button>
+    <button class="btn btn-outline" onclick="collapseAll()">Collapse all</button>
 </div>
 
 <div id="no-match-msg">No species match this filter.</div>
@@ -458,6 +460,29 @@
         document.querySelectorAll('.sightings-table th[data-field]').forEach(function(th) {
             th.classList.remove('sort-asc', 'sort-desc');
             if (th.dataset.field === field) th.classList.add('sort-' + dir);
+        });
+    }
+
+    function expandAll() {
+        document.querySelectorAll('.species-row').forEach(function(row) {
+            if (row.style.display === 'none') return;
+            var idx = row.dataset.idx;
+            row.classList.add('expanded');
+            document.querySelectorAll('.checklist-row[data-idx="' + idx + '"]').forEach(function(r) {
+                r.classList.add('visible');
+                r.style.display = '';
+            });
+        });
+    }
+
+    function collapseAll() {
+        document.querySelectorAll('.species-row').forEach(function(row) {
+            var idx = row.dataset.idx;
+            row.classList.remove('expanded');
+            document.querySelectorAll('.checklist-row[data-idx="' + idx + '"]').forEach(function(r) {
+                r.classList.remove('visible');
+                r.style.display = 'none';
+            });
         });
     }
 
