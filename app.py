@@ -43,6 +43,8 @@ def _make_sparkline_svg(counts, width=80, height=20):
             fill = '#d0c8be'
         y = height - h
         bars.append(f'<rect x="{x:.1f}" y="{y}" width="{bar_w:.1f}" height="{h}" fill="{fill}" rx="0.5"/>')
+    today_cx = (n - 1) * slot + slot / 2
+    bars.append(f'<circle cx="{today_cx:.1f}" cy="{height + 4}" r="1.5" fill="#c8881a"/>')
     return f'<svg width="{width}" height="{height}" style="vertical-align:middle;overflow:visible;">{"".join(bars)}</svg>'
 
 
