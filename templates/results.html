@@ -166,6 +166,8 @@
         .species-row.expanded .expand-icon { transform: rotate(90deg); }
 
         .species-name { font-weight: bold; vertical-align: middle; }
+        .species-link { font-weight: bold; vertical-align: middle; color: inherit; text-decoration: none; }
+        .species-link:hover { text-decoration: underline; }
         .species-list-count {
             display: block;
             font-size: 11px;
@@ -338,7 +340,7 @@
         data-count="{{ species.total if species.total is not none else -1 }}"
         onclick="toggleSpecies(this)">
         <td>
-            <span class="expand-icon">&#9654;</span><span class="species-name">{{ species.name }}</span>
+            <span class="expand-icon">&#9654;</span><a href="https://ebird.org/species/{{ species.species_code }}" target="_blank" class="species-link" onclick="event.stopPropagation()">{{ species.name }}</a>
             <span class="species-list-count">{{ species.records|length }} checklist{{ 's' if species.records|length != 1 else '' }}</span>
         </td>
         <td>{{ species.records[0].date }}</td>

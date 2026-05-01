@@ -252,17 +252,18 @@ def results_from_coordinates(lat, lng, notable=False, species_code=None, dist=10
             'how_many': obs.get('howMany'),
         }
         if name not in groups:
-            groups[name] = []
+            groups[name] = {'records': [], 'species_code': obs.get('speciesCode', '')}
             order.append(name)
-        groups[name].append(record)
+        groups[name]['records'].append(record)
 
     species_data = []
     for name in order:
-        records = sorted(groups[name], key=lambda r: r['raw_dt'], reverse=True)
+        records = sorted(groups[name]['records'], key=lambda r: r['raw_dt'], reverse=True)
         known = [r['how_many'] for r in records if r['how_many'] is not None]
         total = sum(known) if known else None
         species_data.append({
             'name': name,
+            'species_code': groups[name]['species_code'],
             'total': total,
             'latest_dt': records[0]['raw_dt'] if records else '',
             'records': records,
