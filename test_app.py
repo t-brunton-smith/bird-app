@@ -290,17 +290,21 @@ class TestMapFunction(unittest.TestCase):
 
 class TestMapRendering(unittest.TestCase):
     def test_pins_render_with_clustering(self):
-        """Markers added to a MarkerCluster should appear in the rendered map HTML."""
+        """Each species gets its own MarkerCluster; markers render into the HTML."""
         fake_locations = [
             (40.78, -73.96, 'American Robin', 'Apr 20, 2026', 3, 'S111'),
             (40.66, -73.97, 'Dark-eyed Junco', 'Apr 18, 2026', 2, 'S222'),
         ]
-        map_obj = ebird_app.create_map_with_pins(fake_locations, (40.71, -74.00))
+        map_obj, species_cluster_vars = ebird_app.create_map_with_pins(fake_locations, (40.71, -74.00))
         html = map_obj.get_root().render()
-        # Folium JSON-encodes marker HTML, so data-species appears as data-species=\\"name\\"
+        # Folium JSON-encodes marker HTML inside JS, so quotes are escaped
         self.assertIn('data-species=\\"American Robin\\"', html)
         self.assertIn('data-species=\\"Dark-eyed Junco\\"', html)
         self.assertIn('markerClusterGroup', html)
+        # Each species has its own cluster entry
+        self.assertIn('American Robin', species_cluster_vars)
+        self.assertIn('Dark-eyed Junco', species_cluster_vars)
+        self.assertNotEqual(species_cluster_vars['American Robin'], species_cluster_vars['Dark-eyed Junco'])
 
 
 if __name__ == '__main__':

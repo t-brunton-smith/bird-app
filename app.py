@@ -1,4 +1,5 @@
 import configparser
+import json
 import os
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -328,29 +329,39 @@ def create_map_with_pins(locations, center_location):
     folium.Marker(location=[center_location[0], center_location[1]],
                   icon=folium.Icon(icon='map-marker', color='red')).add_to(map_obj)
 
-    cluster = MarkerCluster().add_to(map_obj)
-    for (lat, lng, comName, obsDt, howMany, subId) in locations:
-        checklist = (f'<a href="https://ebird.org/checklist/{subId}" target="_blank" '
-                     f'style="color:#c8881a;">View checklist ↗</a>') if subId else ''
-        popup_html = (f'<div style="font-family:Arial,sans-serif;font-size:13px;min-width:160px;">'
-                      f'<strong style="font-size:14px;display:block;margin-bottom:4px;">{comName}</strong>'
-                      f'<span style="color:#666;">{obsDt}</span>'
-                      f'{f"<br>Count: {howMany}" if howMany else ""}'
-                      f'{"<br>" + checklist if checklist else ""}'
-                      f'</div>')
-        icon_html = (
-            f'<div data-species="{comName}" style="line-height:0;">'
-            f'<svg xmlns="http://www.w3.org/2000/svg" width="18" height="26" viewBox="0 0 18 26">'
-            f'<path d="M9 0C4.03 0 0 4.03 0 9c0 5.63 9 17 9 17S18 14.63 18 9c0-4.97-4.03-9-9-9z" fill="#c8881a"/>'
-            f'<circle cx="9" cy="9" r="3.5" fill="white" opacity="0.9"/>'
-            f'</svg></div>'
-        )
-        folium.Marker(location=[lat, lng],
-                      icon=folium.DivIcon(html=icon_html, icon_size=(18, 26),
-                                          icon_anchor=(9, 26), popup_anchor=(0, -26)),
-                      popup=folium.Popup(popup_html, max_width=220)).add_to(cluster)
+    # Group locations by species so each species gets its own cluster layer.
+    # This lets filterSpecies show/hide entire clusters rather than recolouring pins.
+    species_locs: dict = {}
+    for loc in locations:
+        species_locs.setdefault(loc[2], []).append(loc)
 
-    return map_obj
+    species_cluster_vars: dict = {}  # comName -> Folium JS variable name
+    for comName, locs in species_locs.items():
+        cluster = MarkerCluster()
+        cluster.add_to(map_obj)
+        species_cluster_vars[comName] = cluster.get_name()
+        for (lat, lng, cn, obsDt, howMany, subId) in locs:
+            checklist = (f'<a href="https://ebird.org/checklist/{subId}" target="_blank" '
+                         f'style="color:#c8881a;">View checklist ↗</a>') if subId else ''
+            popup_html = (f'<div style="font-family:Arial,sans-serif;font-size:13px;min-width:160px;">'
+                          f'<strong style="font-size:14px;display:block;margin-bottom:4px;">{cn}</strong>'
+                          f'<span style="color:#666;">{obsDt}</span>'
+                          f'{f"<br>Count: {howMany}" if howMany else ""}'
+                          f'{"<br>" + checklist if checklist else ""}'
+                          f'</div>')
+            icon_html = (
+                f'<div data-species="{cn}" style="line-height:0;">'
+                f'<svg xmlns="http://www.w3.org/2000/svg" width="18" height="26" viewBox="0 0 18 26">'
+                f'<path d="M9 0C4.03 0 0 4.03 0 9c0 5.63 9 17 9 17S18 14.63 18 9c0-4.97-4.03-9-9-9z" fill="#c8881a"/>'
+                f'<circle cx="9" cy="9" r="3.5" fill="white" opacity="0.9"/>'
+                f'</svg></div>'
+            )
+            folium.Marker(location=[lat, lng],
+                          icon=folium.DivIcon(html=icon_html, icon_size=(18, 26),
+                                              icon_anchor=(9, 26), popup_anchor=(0, -26)),
+                          popup=folium.Popup(popup_html, max_width=220)).add_to(cluster)
+
+    return map_obj, species_cluster_vars
 
 
 @app.route('/map')
@@ -407,7 +418,7 @@ def map_endpoint():
                 totals[s[2]] = None
         species_summary = sorted(totals.items(), key=lambda x: (x[1] is None, -(x[1] or 0)))
 
-        map_obj = create_map_with_pins(sighting_coordinates, center_coordinates)
+        map_obj, species_cluster_vars = create_map_with_pins(sighting_coordinates, center_coordinates)
 
         btn_style = ('display:inline-block; background:#c8881a; color:white; padding:7px 12px; '
                      'border-radius:6px; text-decoration:none; font-family:Arial,sans-serif; '
@@ -444,23 +455,26 @@ def map_endpoint():
         map_obj.get_root().html.add_child(folium.Element(nav_html))
 
         map_var = map_obj.get_name()
+        cluster_map_json = json.dumps(species_cluster_vars)
         filter_js = (
             '<script>window.addEventListener("load",function(){'
             'var lmap=window["' + map_var + '"];'
             'if(!lmap)return;'
             'var active=null;'
+            'var clusterMap=' + cluster_map_json + ';'
             'window.filterSpecies=function(name){'
             'var rows=document.querySelectorAll("#map-summary [data-species]");'
-            'var pins=document.querySelectorAll(".leaflet-marker-pane [data-species]");'
             'if(active===name){'
             'active=null;'
-            'pins.forEach(function(el){var p=el.querySelector("path");if(p)p.setAttribute("fill","#c8881a");});'
+            'Object.values(clusterMap).forEach(function(v){'
+            'var c=window[v];if(c&&!lmap.hasLayer(c))lmap.addLayer(c);'
+            '});'
             'rows.forEach(function(r){r.style.background="";r.style.fontWeight="";r.style.color="";});'
             '}else{'
             'active=name;'
-            'pins.forEach(function(el){'
-            'var p=el.querySelector("path");'
-            'if(p)p.setAttribute("fill",el.dataset.species===name?"#c0522a":"#c8881a");'
+            'Object.keys(clusterMap).forEach(function(s){'
+            'var c=window[clusterMap[s]];if(!c)return;'
+            'if(s===name){if(!lmap.hasLayer(c))lmap.addLayer(c);}else{if(lmap.hasLayer(c))lmap.removeLayer(c);}'
             '});'
             'rows.forEach(function(r){'
             'var on=r.dataset.species===name;'
@@ -468,13 +482,9 @@ def map_endpoint():
             'r.style.fontWeight=on?"bold":"";'
             'r.style.color=on?"#a86f10":"";'
             '});'
-            'var b=[];'
-            'lmap.eachLayer(function(l){'
-            'if(!l._icon)return;'
-            'var el=l._icon.querySelector("[data-species]");'
-            'if(el&&el.dataset.species===name)b.push(l.getLatLng());'
-            '});'
-            'if(b.length)lmap.fitBounds(L.latLngBounds(b),{padding:[50,50],maxZoom:14});'
+            'var c=window[clusterMap[name]];'
+            'if(c){var b=[];c.eachLayer(function(l){if(l.getLatLng)b.push(l.getLatLng());});'
+            'if(b.length)lmap.fitBounds(L.latLngBounds(b),{padding:[50,50],maxZoom:14});}'
             '}'
             '};'
             '});'
