@@ -380,6 +380,10 @@
 
         </form>
     </div>
+    <div id="recent-searches" style="display:none; margin-top:16px;">
+        <p style="font-size:13px; color:var(--muted); margin:0 0 6px 0;">Recent searches</p>
+        <div id="recent-list"></div>
+    </div>
 </div>
 
 <script src="{{ url_for('static', filename='app.js') }}"></script>
@@ -445,10 +449,16 @@
     });
 
     function submitForm(endpoint) {
-        if (!document.getElementById('location').value) {
-            alert('Please enter a location.');
-            return;
-        }
+        var loc = document.getElementById('location').value;
+        if (!loc) { alert('Please enter a location.'); return; }
+        var distVal = document.getElementById('dist').value;
+        var backVal = document.getElementById('back').value;
+        try {
+            var recent = JSON.parse(localStorage.getItem('phlock_recent') || '[]');
+            recent = recent.filter(function(r) { return r.location !== loc; });
+            recent.unshift({ location: loc, dist: distVal, back: backVal });
+            localStorage.setItem('phlock_recent', JSON.stringify(recent.slice(0, 5)));
+        } catch(e) {}
         document.getElementById('loading-overlay').style.display = 'flex';
         var form = document.getElementById('dataForm');
         form.action = endpoint;
@@ -459,7 +469,34 @@
     (function() {
         var p = new URLSearchParams(window.location.search);
         var loc = p.get('location');
-        if (!loc) return;
+
+        if (!loc) {
+            try {
+                var recent = JSON.parse(localStorage.getItem('phlock_recent') || '[]');
+                if (recent.length) {
+                    var container = document.getElementById('recent-searches');
+                    var list = document.getElementById('recent-list');
+                    recent.forEach(function(item) {
+                        var btn = document.createElement('button');
+                        btn.type = 'button';
+                        btn.className = 'btn btn-outline';
+                        btn.style.cssText = 'display:block; width:100%; text-align:left; margin-bottom:6px; font-size:13px;';
+                        btn.textContent = item.location;
+                        btn.addEventListener('click', function() {
+                            document.getElementById('location').value = item.location;
+                            document.getElementById('dist').value = item.dist || 10;
+                            document.getElementById('dist-value').textContent = item.dist || 10;
+                            document.getElementById('back').value = item.back || 7;
+                            document.getElementById('back-value').textContent = item.back || 7;
+                            submitForm('/results');
+                        });
+                        list.appendChild(btn);
+                    });
+                    container.style.display = 'block';
+                }
+            } catch(e) {}
+            return;
+        }
 
         document.getElementById('location').value = loc;
 
