@@ -21,6 +21,13 @@ _OBS_CACHE_TTL = 300  # seconds
 def _make_sparkline_svg(counts, width=80, height=20):
     if not counts:
         return ''
+    if len(counts) >= 3:
+        smoothed = []
+        for i in range(len(counts)):
+            prev = counts[i - 1] if i > 0 else counts[i]
+            nxt = counts[i + 1] if i < len(counts) - 1 else counts[i]
+            smoothed.append(prev * 0.25 + counts[i] * 0.5 + nxt * 0.25)
+        counts = smoothed
     mx = max(counts)
     n = len(counts)
     slot = width / n
