@@ -282,7 +282,10 @@
             font-family: 'AntipastoPro', sans-serif;
             font-size: 18px;
             color: var(--muted);
+            transition: opacity 0.4s ease;
         }
+
+        .loading-text.fade { opacity: 0; }
 
         @keyframes spin { to { transform: rotate(360deg); } }
     </style>
@@ -448,6 +451,31 @@
         document.getElementById('loc_name').value = o.dataset.name || '';
     });
 
+    var _loadingTimer = null;
+    function startLoadingMessages() {
+        var messages = [
+            'Scanning the skies…',
+            'Checking the feeders…',
+            'Listening for birdsong…',
+            'Searching the canopy…',
+            'Watching the treeline…',
+            'Following the flock…',
+            'Spotting in the hedgerows…',
+            'Consulting the migration charts…',
+        ];
+        var el = document.querySelector('.loading-text');
+        var idx = 0;
+        function cycle() {
+            el.classList.add('fade');
+            setTimeout(function() {
+                idx = (idx + 1) % messages.length;
+                el.textContent = messages[idx];
+                el.classList.remove('fade');
+            }, 400);
+        }
+        _loadingTimer = setInterval(cycle, 2200);
+    }
+
     function submitForm(endpoint) {
         var loc = document.getElementById('location').value;
         if (!loc) { alert('Please enter a location.'); return; }
@@ -460,6 +488,7 @@
             localStorage.setItem('phlock_recent', JSON.stringify(recent.slice(0, 5)));
         } catch(e) {}
         document.getElementById('loading-overlay').style.display = 'flex';
+        startLoadingMessages();
         var form = document.getElementById('dataForm');
         form.action = endpoint;
         form.submit();
