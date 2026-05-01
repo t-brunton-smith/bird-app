@@ -139,6 +139,11 @@
         .sightings-table th.sort-asc::after  { content: " ▲"; font-size: 10px; }
         .sightings-table th.sort-desc::after { content: " ▼"; font-size: 10px; }
 
+        /* ── Sparkline cell ── */
+        .species-cell { display: flex; align-items: center; gap: 10px; }
+        .species-info  { flex: 1; min-width: 0; }
+        .spark-wrap    { flex-shrink: 0; line-height: 0; }
+
         /* ── Species rows ── */
         .species-row {
             cursor: pointer;
@@ -248,11 +253,7 @@
             /* Species row → card */
             .species-row { display: block; }
             .species-row td { display: block; border: none; padding: 0; background: transparent; }
-            .species-row > td:first-child {
-                display: flex;
-                align-items: flex-start;
-                padding: 12px 14px 10px;
-            }
+            .species-row > td:first-child { padding: 12px 14px 10px; }
             .species-row > td:nth-child(2) { display: none; } /* hide Latest col; newest checklist shows date */
             .species-row > td:nth-child(3) {
                 display: flex;
@@ -262,7 +263,6 @@
                 font-size: 12px;
                 color: var(--muted);
             }
-            .species-row > td:nth-child(4) { display: none; }
 
             .species-row {
                 margin: 8px 12px 0;
@@ -291,7 +291,7 @@
             .ci-link  { width: auto; order: 4; margin-left: auto; }
 
             .species-list-count { padding-left: 0; margin-top: 1px; }
-            .spark-col { display: none; }
+            .spark-wrap svg { width: 60px; }
         }
 
         #loading-overlay {
@@ -355,7 +355,6 @@
         <th class="sortable" data-field="name" onclick="sortTable('name')">Species</th>
         <th class="sortable" data-field="date" onclick="sortTable('date')">Latest Seen</th>
         <th class="sortable sort-desc" data-field="count" onclick="sortTable('count')">Total Count</th>
-        <th class="spark-col" style="text-align:right; font-weight:normal; font-size:11px; color:var(--muted);">Activity</th>
     </tr>
     </thead>
     <tbody id="sightings-tbody" data-sort-field="count" data-sort-dir="desc">
@@ -368,8 +367,13 @@
         data-count="{{ species.total if species.total is not none else -1 }}"
         onclick="toggleSpecies(this)">
         <td>
-            <span class="expand-icon">&#9654;</span><a href="https://ebird.org/species/{{ species.species_code }}" target="_blank" class="species-link" onclick="event.stopPropagation()">{{ species.name }}</a>
-            <span class="species-list-count">{{ species.records|length }} checklist{{ 's' if species.records|length != 1 else '' }}</span>
+            <div class="species-cell">
+                <div class="spark-wrap">{{ species.spark_svg | safe }}</div>
+                <div class="species-info">
+                    <span class="expand-icon">&#9654;</span><a href="https://ebird.org/species/{{ species.species_code }}" target="_blank" class="species-link" onclick="event.stopPropagation()">{{ species.name }}</a>
+                    <span class="species-list-count">{{ species.records|length }} checklist{{ 's' if species.records|length != 1 else '' }}</span>
+                </div>
+            </div>
         </td>
         <td>{{ species.records[0].date }}</td>
         <td>
@@ -379,13 +383,10 @@
             <span class="count-badge unknown">—</span>
             {% endif %}
         </td>
-        <td class="spark-col" style="text-align:right; padding-right:10px; vertical-align:middle;">
-            {{ species.spark_svg | safe }}
-        </td>
     </tr>
     {% for record in species.records %}
     <tr class="checklist-row" data-idx="{{ sidx }}">
-        <td colspan="4">
+        <td colspan="3">
             <div class="checklist-item">
                 <span class="ci-loc">{{ record.loc_name }}</span>
                 <span class="ci-date">{{ record.date }}</span>
