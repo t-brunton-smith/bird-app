@@ -2,6 +2,7 @@ import configparser
 import json
 import os
 import time
+from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date, datetime, timedelta
 from urllib.parse import urlencode
@@ -14,8 +15,19 @@ import pandas as pd
 
 app = Flask(__name__)
 
-_obs_cache: dict = {}
-_OBS_CACHE_TTL = 300  # seconds
+_obs_cache: OrderedDict = OrderedDict()
+_OBS_CACHE_TTL = 300   # seconds
+_OBS_CACHE_MAX = 500   # max entries; oldest evicted when limit is reached
+
+
+def _obs_cache_put(key, value):
+    now = time.time()
+    expired = [k for k, (_, t) in _obs_cache.items() if now - t >= _OBS_CACHE_TTL]
+    for k in expired:
+        del _obs_cache[k]
+    while len(_obs_cache) >= _OBS_CACHE_MAX:
+        _obs_cache.popitem(last=False)
+    _obs_cache[key] = (value, now)
 
 
 def _make_sparkline_svg(counts, width=80, height=20):
@@ -28,15 +40,14 @@ def _make_sparkline_svg(counts, width=80, height=20):
             nxt = counts[i + 1] if i < len(counts) - 1 else counts[i]
             smoothed.append(prev * 0.25 + counts[i] * 0.5 + nxt * 0.25)
         counts = smoothed
-    mx = max(counts)
     n = len(counts)
     slot = width / n
     bar_w = max(1.5, slot * 0.72)
     bars = []
     for i, c in enumerate(counts):
         x = i * slot + (slot - bar_w) / 2
-        if mx > 0 and c > 0:
-            h = max(2, round(c / mx * (height - 2)))
+        if c > 0:
+            h = max(2, round(c * (height - 2)))
             fill = '#c8881a'
         else:
             h = 1
@@ -64,6 +75,7 @@ _SPECIES_CODES = pd.Series(
     index=_df_tax.COMMON_NAME.str.lower()
 ).to_dict()
 _SPECIES_NAMES = sorted(_df_tax['COMMON_NAME'].dropna().tolist())
+del _df_tax
 
 
 def _load_api_key(env_var, ini_section):
@@ -87,9 +99,10 @@ _STADIA_TOKEN = _load_api_key('STADIA_TOKEN', 'stadia')
 def https_redirect():
     if request.host.split(':')[0] in ('localhost', '127.0.0.1'):
         return
-    if not request.is_secure:
-        url = request.url.replace('http://', 'https://', 1)
-        return redirect(url, code=301)
+    if request.is_secure or request.headers.get('X-Forwarded-Proto') == 'https':
+        return
+    url = request.url.replace('http://', 'https://', 1)
+    return redirect(url, code=301)
 
 
 @app.route('/')
@@ -193,6 +206,22 @@ def _top_species_codes(index_obs, limit=50):
     return ordered[:limit]
 
 
+def _fetch_complete_subs(lat, lng, dist, headers):
+    """Return set of subIds for complete checklists (allObsReported) in the area.
+    Uses the /product/lists/geo endpoint (max 200 results). Returns empty set on any error;
+    caller falls back to using all checklists."""
+    url = (f'https://api.ebird.org/v2/product/lists/geo'
+           f'?lat={lat}&lng={lng}&dist={dist}&maxResults=200')
+    try:
+        data = requests.get(url, headers=headers, timeout=10).json()
+        if not isinstance(data, list):
+            return set()
+        return {item['subId'] for item in data
+                if item.get('allObsReported') and item.get('subId')}
+    except Exception:
+        return set()
+
+
 def _fetch_all_obs_for_species(species_code, lat, lng, dist, back, headers, loc_id=None):
     """Fetch all recent checklist-level observations for one species. Returns [] on any error."""
     key = (species_code, loc_id, back) if loc_id else (species_code, round(lat, 4), round(lng, 4), dist, back)
@@ -211,7 +240,7 @@ def _fetch_all_obs_for_species(species_code, lat, lng, dist, back, headers, loc_
             resp = requests.get(url, headers=headers, timeout=10)
         result = resp.json()
         result = result if isinstance(result, list) else []
-        _obs_cache[key] = (result, time.time())
+        _obs_cache_put(key, result)
         return result
     except Exception:
         return []
@@ -310,20 +339,32 @@ def results_from_coordinates(lat, lng, notable=False, species_code=None, dist=10
     today = date.today()
     day_keys = [(today - timedelta(days=i)).isoformat() for i in range(back - 1, -1, -1)]
 
+    # Reporting-rate denominator: complete checklists only, falling back to all if unavailable
+    complete_subs = _fetch_complete_subs(lat, lng, dist, headers)
+    daily_all_subs: dict = {}
+    for obs in all_obs:
+        d = obs.get('obsDt', '')[:10]
+        sub = obs.get('subId', '')
+        if d and sub and (not complete_subs or sub in complete_subs):
+            daily_all_subs.setdefault(d, set()).add(sub)
+    daily_checklist_counts = {d: len(s) for d, s in daily_all_subs.items()}
+    del all_obs
+
     species_data = []
     for name in order:
         records = sorted(groups[name]['records'], key=lambda r: r['raw_dt'], reverse=True)
         known = [r['how_many'] for r in records if r['how_many'] is not None]
         total = sum(known) if known else None
-        daily: dict = {}
+        daily_species_subs: dict = {}
         for r in records:
             d = r['raw_dt'][:10]
-            count = r['how_many']
-            if count is not None:
-                daily[d] = max(daily.get(d, 0), count)
-            elif d not in daily:
-                daily[d] = 0  # seen but count unknown — show hairline
-        spark_counts = [daily.get(d, 0) for d in day_keys]
+            if r['sub_id'] and (not complete_subs or r['sub_id'] in complete_subs):
+                daily_species_subs.setdefault(d, set()).add(r['sub_id'])
+        spark_counts = [
+            len(daily_species_subs.get(d, set())) / daily_checklist_counts[d]
+            if daily_checklist_counts.get(d, 0) > 0 else 0
+            for d in day_keys
+        ]
         species_data.append({
             'name': name,
             'species_code': groups[name]['species_code'],

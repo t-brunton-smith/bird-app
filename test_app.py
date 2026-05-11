@@ -28,10 +28,12 @@ FAKE_TWO_ROBIN_RECORDS = [
 class TestURLStrategy(unittest.TestCase):
     """Verify the correct eBird API endpoint is selected for each search variant."""
 
+    @patch('app._fetch_complete_subs')
     @patch('app.requests.get')
-    def test_species_specific_url_has_no_detail_full(self, mock_get):
+    def test_species_specific_url_has_no_detail_full(self, mock_get, mock_complete):
         """Species-specific endpoint must not have detail=full."""
         mock_get.return_value = MagicMock(json=MagicMock(return_value=[]))
+        mock_complete.return_value = set()
         with ebird_app.app.test_request_context():
             ebird_app.results_from_coordinates(
                 40.71, -74.00,
@@ -43,9 +45,10 @@ class TestURLStrategy(unittest.TestCase):
         self.assertNotIn('detail=full', called_url)
         self.assertIn('/geo/recent/amered', called_url)
 
+    @patch('app._fetch_complete_subs')
     @patch('app._fetch_all_obs_for_species')
     @patch('app.requests.get')
-    def test_no_filter_queries_geo_index_first(self, mock_get, mock_fetch):
+    def test_no_filter_queries_geo_index_first(self, mock_get, mock_fetch, mock_complete):
         """No species/loc_id: geo/recent index is called first, then per-species fetch."""
         mock_get.return_value = MagicMock(json=MagicMock(return_value=[
             {'comName': 'American Robin', 'speciesCode': 'amerob',
@@ -53,6 +56,7 @@ class TestURLStrategy(unittest.TestCase):
              'subId': 'S111', 'howMany': 3, 'lat': 40.78, 'lng': -73.96},
         ]))
         mock_fetch.return_value = []
+        mock_complete.return_value = set()
         with ebird_app.app.test_request_context():
             ebird_app.results_from_coordinates(40.71, -74.00, location='New York')
         index_url = mock_get.call_args[0][0]
@@ -60,10 +64,12 @@ class TestURLStrategy(unittest.TestCase):
         self.assertNotIn('/ref/hotspot/geo', index_url)
         self.assertTrue(mock_fetch.called)
 
+    @patch('app._fetch_complete_subs')
     @patch('app.requests.get')
-    def test_empty_index_uses_single_request(self, mock_get):
+    def test_empty_index_uses_single_request(self, mock_get, mock_complete):
         """Empty geo index (no species codes) uses index obs directly — only 1 request."""
         mock_get.return_value = MagicMock(json=MagicMock(return_value=[]))
+        mock_complete.return_value = set()
         with ebird_app.app.test_request_context():
             ebird_app.results_from_coordinates(40.71, -74.00, location='New York')
         self.assertEqual(mock_get.call_count, 1)
@@ -71,10 +77,12 @@ class TestURLStrategy(unittest.TestCase):
         self.assertIn('/data/obs/geo/recent', called_url)
         self.assertNotIn('/ref/hotspot/geo', called_url)
 
+    @patch('app._fetch_complete_subs')
     @patch('app.requests.get')
-    def test_loc_id_uses_single_direct_request(self, mock_get):
+    def test_loc_id_uses_single_direct_request(self, mock_get, mock_complete):
         """Specific hotspot selected: single direct request, no hotspot lookup."""
         mock_get.return_value = MagicMock(json=MagicMock(return_value=[]))
+        mock_complete.return_value = set()
         with ebird_app.app.test_request_context():
             ebird_app.results_from_coordinates(
                 40.71, -74.00, loc_id='L123456', location='New York')
@@ -83,9 +91,10 @@ class TestURLStrategy(unittest.TestCase):
         self.assertIn('L123456/recent', called_url)
         self.assertNotIn('detail=full', called_url)
 
+    @patch('app._fetch_complete_subs')
     @patch('app._fetch_all_obs_for_species')
     @patch('app.requests.get')
-    def test_notable_uses_notable_index_then_expands(self, mock_get, mock_fetch):
+    def test_notable_uses_notable_index_then_expands(self, mock_get, mock_fetch, mock_complete):
         """notable=True: notable endpoint used as index, then per-species expansion."""
         mock_get.return_value = MagicMock(json=MagicMock(return_value=[
             {'comName': 'Painted Bunting', 'speciesCode': 'painbu',
@@ -93,6 +102,7 @@ class TestURLStrategy(unittest.TestCase):
              'subId': 'S111', 'howMany': 1, 'lat': 40.78, 'lng': -73.96},
         ]))
         mock_fetch.return_value = []
+        mock_complete.return_value = set()
         with ebird_app.app.test_request_context():
             ebird_app.results_from_coordinates(40.71, -74.00, notable=True, location='New York')
         self.assertEqual(mock_get.call_count, 1)
